@@ -13,8 +13,13 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun getTasks(search: String, page: Int, size: Int): Result<Pair<List<com.qinglong.core.model.TaskInfo>, Int>> {
         return try {
             val res = api.getTasks(search, page, size)
-            if (res.code == 200 && res.data != null) {
-                Result.success(Pair(res.data.data.orEmpty(), res.data.total ?: 0))
+            if (res.code == 200) {
+                val listData = res.data
+                if (listData != null) {
+                    Result.success(Pair(listData.data.orEmpty(), listData.total ?: 0))
+                } else {
+                    Result.success(Pair(emptyList(), 0))
+                }
             } else {
                 Result.failure(Exception(res.message ?: "获取任务列表失败"))
             }

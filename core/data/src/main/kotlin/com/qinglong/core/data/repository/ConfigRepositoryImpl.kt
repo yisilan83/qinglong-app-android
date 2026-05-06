@@ -14,7 +14,7 @@ class ConfigRepositoryImpl @Inject constructor(
     override suspend fun getConfigContent(name: String): Result<String> {
         return try {
             val res = api.getConfigContent(name)
-            if (res.code == 200 && res.data != null) Result.success(res.data)
+            if (res.code == 200) Result.success(res.data ?: "")
             else Result.failure(Exception(res.message ?: "获取配置内容失败"))
         } catch (e: Exception) {
             Result.failure(e)
@@ -34,8 +34,14 @@ class ConfigRepositoryImpl @Inject constructor(
     override suspend fun getSystemConfig(): Result<SystemConfig> {
         return try {
             val res = api.getSystemConfig()
-            if (res.code == 200 && res.data?.info != null) Result.success(res.data.info)
-            else Result.failure(Exception(res.message ?: "获取系统配置失败"))
+            if (res.code == 200) {
+                val configData = res.data
+                val info = configData?.info
+                if (info != null) Result.success(info)
+                else Result.failure(Exception(res.message ?: "系统配置为空"))
+            } else {
+                Result.failure(Exception(res.message ?: "获取系统配置失败"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

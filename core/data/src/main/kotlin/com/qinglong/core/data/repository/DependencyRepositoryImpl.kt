@@ -39,8 +39,13 @@ class DependencyRepositoryImpl @Inject constructor(
     override suspend fun getDependenceLog(id: String): Result<String> {
         return try {
             val res = api.getDependenceLog(id)
-            if (res.code == 200 && res.data != null) {
-                Result.success(res.data.log?.joinToString("\n").orEmpty())
+            if (res.code == 200) {
+                val logEntry = res.data
+                if (logEntry != null) {
+                    Result.success(logEntry.log?.joinToString("\n").orEmpty())
+                } else {
+                    Result.success("")
+                }
             } else {
                 Result.failure(Exception(res.message ?: "获取日志失败"))
             }

@@ -27,8 +27,11 @@ class ScriptRepositoryImpl @Inject constructor(
     override suspend fun getScriptContent(filename: String, path: String): Result<String> {
         return try {
             val res = api.getScriptContent(filename, path)
-            if (res.code == 200 && res.data != null) Result.success(res.data)
-            else Result.failure(Exception(res.message ?: "获取脚本内容失败"))
+            if (res.code == 200) {
+                Result.success(res.data ?: "")
+            } else {
+                Result.failure(Exception(res.message ?: "获取脚本内容失败"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

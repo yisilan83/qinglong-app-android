@@ -25,7 +25,7 @@ class LogRepositoryImpl @Inject constructor(
     override suspend fun getLogContent(path: String): Result<String> {
         return try {
             val res = api.getLogContent("api/logs/$path")
-            if (res.code == 200 && res.data != null) Result.success(res.data)
+            if (res.code == 200) Result.success(res.data ?: "")
             else Result.failure(Exception(res.message ?: "获取日志内容失败"))
         } catch (e: Exception) {
             Result.failure(e)
@@ -35,7 +35,7 @@ class LogRepositoryImpl @Inject constructor(
     override suspend fun getTaskLog(taskId: String): Result<String> {
         return try {
             val res = api.getTaskLog(taskId)
-            if (res.code == 200 && res.data != null) Result.success(res.data)
+            if (res.code == 200) Result.success(res.data ?: "")
             else Result.failure(Exception(res.message ?: "获取任务日志失败"))
         } catch (e: Exception) {
             Result.failure(e)
