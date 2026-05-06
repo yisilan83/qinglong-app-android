@@ -1,12 +1,14 @@
 package com.qinglong.core.data.remote
 
 import com.qinglong.core.model.ApiResponse
+import com.qinglong.core.model.EnvInfo
 import com.qinglong.core.model.LoginData
 import com.qinglong.core.model.LoginRequest
 import com.qinglong.core.model.ScriptFile
 import com.qinglong.core.model.SystemInfo
 import com.qinglong.core.model.TaskInfo
 import com.qinglong.core.model.TwoFactorRequest
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -45,4 +47,22 @@ interface QLApiService {
         @Path("filename") filename: String,
         @Query("path") path: String? = null
     ): ApiResponse<String>
+
+    @GET("api/envs")
+    suspend fun getEnvs(@Query("searchValue") search: String = ""): ApiResponse<List<EnvInfo>>
+
+    @POST("api/envs")
+    suspend fun addEnv(@Body data: List<Map<String, String>>): ApiResponse<Unit>
+
+    @PUT("api/envs")
+    suspend fun updateEnv(@Body data: Map<String, String>): ApiResponse<Unit>
+
+    @PUT("api/envs/enable")
+    suspend fun enableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/envs/disable")
+    suspend fun disableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+
+    @retrofit2.http.HTTP(method = "DELETE", path = "api/envs", hasBody = true)
+    suspend fun deleteEnvs(@Body ids: List<String>): ApiResponse<Unit>
 }
