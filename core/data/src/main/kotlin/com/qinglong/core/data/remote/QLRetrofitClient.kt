@@ -1,73 +1,41 @@
 package com.qinglong.core.data.remote
 
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
+import com.qinglong.core.data.session.SessionManager
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Retrofit 客户端工厂。
- * 支持动态 baseUrl（多账户场景）。
+ * 使用默认 baseUrl 占位，实际 host 通过 @Url 动态指定或由调用方在拦截器中切换。
  */
 @Singleton
 class QLRetrofitClient @Inject constructor(
-    private val tokenProvider: TokenProvider
+    private val okHttpClient: OkHttpClient,
+    private val json: Json,
+    private val sessionManager: SessionManager
 ) {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-        isLenient = true
-    }
-
-    private val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val original = chain.request()
-                val token = tokenProvider.getTokenSync()
-                val request = if (token != null) {
-                    original.newBuilder()
-                        .header("Authorization", "Bearer $token")
-                        .build()
-                } else {
-                    original
-                }
-                chain.proceed(request)
-            }
-            .addInterceptor(
-                HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                }
-            )
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            // 信任自签名证书
-            .hostnameVerifier { _, _ -> true }
-            .build()
-    }
+    /**
+     * 获取指向当前 Host 的 API 服务。
+     * Host 变化时需调用 [rebuildForCurrentHost] 重建。
+     */
+    val apiService: QLApiService by lazy { buildService(sessionManager.host ?: "http://localhost:5700/") }
 
     /**
-     * 为指定 host 创建 API 服务
+     * 为指定 host 创建 API 服务（登录前使用）。
      */
-    fun createApiService(host: String): QLApiService {
+    fun createApiService(host: String): QLApiService = buildService(host)
+
+    private fun buildService(host: String): QLApiService {
         val baseUrl = if (host.endsWith("/")) host else "$host/"
-        val retrofit = Retrofit.Builder()
+        return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-        return retrofit.create(QLApiService::class.java)
+            .create(QLApiService::class.java)
     }
-}
-
-/**
- * Token 提供者接口（由 DataStore 实现）
- */
-interface TokenProvider {
-    fun getTokenSync(): String?
 }
