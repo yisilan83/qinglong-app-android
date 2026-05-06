@@ -7,13 +7,13 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.NavigationSuiteItemColors
-import androidx.compose.material3.adaptive.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -38,32 +38,37 @@ private val bottomNavItems = listOf(
     BottomNavItem(SettingsRoute, "设置", Icons.Default.Settings)
 )
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun QLNavScaffold(onLogout: () -> Unit) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            bottomNavItems.forEach { item ->
-                item(
-                    icon = { Icon(item.icon, contentDescription = item.label) },
-                    label = { Text(item.label) },
-                    selected = currentDestination?.hasRoute(item.route::class) == true,
-                    onClick = {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                bottomNavItems.forEach { item ->
+                    NavigationBarItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = currentDestination?.hasRoute(item.route::class) == true,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
-    ) {
-        NavHost(navController = navController, startDestination = HomeRoute) {
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = HomeRoute,
+            modifier = Modifier.padding(padding)
+        ) {
             composable<HomeRoute> { HomeScreen() }
             composable<TasksRoute> { TasksScreen() }
             composable<ScriptsRoute> { ScriptsScreen() }
