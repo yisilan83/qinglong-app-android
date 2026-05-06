@@ -115,7 +115,8 @@ class LoginViewModel @Inject constructor(
             username = _username.value,
             password = _password.value,
             token = result.data.token ?: "",
-            alias = _alias.value.ifBlank { null }
+            alias = _alias.value.ifBlank { null },
+            remember = _rememberPassword.value
         )
         _uiState.update { LoginUiState.Success }
     }

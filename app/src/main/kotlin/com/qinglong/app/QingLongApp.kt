@@ -6,7 +6,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,6 @@ fun QingLongApp(
     val isLoggedIn by appViewModel.isLoggedIn.collectAsStateWithLifecycle()
 
     if (isLoggedIn == null) {
-        // 初始加载中
         Surface(color = MaterialTheme.colorScheme.background) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -37,15 +35,6 @@ fun QingLongApp(
 
     val navController = rememberNavController()
     val startDestination = if (isLoggedIn == true) HomeRoute else LoginRoute
-
-    // 登录状态变化时自动导航
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn == true) {
-            navController.navigate(HomeRoute) {
-                popUpTo<LoginRoute> { inclusive = true }
-            }
-        }
-    }
 
     NavHost(
         navController = navController,

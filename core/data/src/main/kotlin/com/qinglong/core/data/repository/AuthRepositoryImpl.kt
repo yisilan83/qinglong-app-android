@@ -67,9 +67,10 @@ class AuthRepositoryImpl @Inject constructor(
         username: String,
         password: String,
         token: String,
-        alias: String?
+        alias: String?,
+        remember: Boolean
     ) {
-        sessionManager.saveSession(host, username, password, token, alias, remember = true)
+        sessionManager.saveSession(host, username, password, token, alias, remember)
     }
 
     override suspend fun getToken(): String? = sessionManager.token

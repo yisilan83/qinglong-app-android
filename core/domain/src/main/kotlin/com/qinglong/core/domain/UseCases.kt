@@ -33,9 +33,10 @@ class SaveCredentialsUseCase @Inject constructor(
         username: String,
         password: String,
         token: String,
-        alias: String? = null
+        alias: String? = null,
+        remember: Boolean = false
     ) {
-        authRepository.saveCredentials(host, username, password, token, alias)
+        authRepository.saveCredentials(host, username, password, token, alias, remember)
     }
 }
 
