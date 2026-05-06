@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.qinglong.core.domain"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig { minSdk = 24 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
