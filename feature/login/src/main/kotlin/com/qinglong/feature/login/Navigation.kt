@@ -1,9 +1,3 @@
 package com.qinglong.feature.login
 
-import kotlinx.serialization.Serializable
-
-@Serializable
-object LoginRoute
-
-@Serializable
-object HomeRoute
+// 路由已迁移至 app/navigation/QLNavRoutes.kt

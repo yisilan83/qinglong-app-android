@@ -14,9 +14,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.qinglong.feature.login.HomeRoute
-import com.qinglong.feature.login.LoginRoute
+import com.qinglong.app.navigation.HomeRoute
+import com.qinglong.app.navigation.LoginRoute
+import com.qinglong.app.navigation.QLNavScaffold
+import com.qinglong.core.data.session.SessionManager
 import com.qinglong.feature.login.LoginScreen
+import javax.inject.Inject
 
 @Composable
 fun QingLongApp(
@@ -36,10 +39,7 @@ fun QingLongApp(
     val navController = rememberNavController()
     val startDestination = if (isLoggedIn == true) HomeRoute else LoginRoute
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable<LoginRoute> {
             LoginScreen(
                 onLoginSuccess = {
@@ -50,14 +50,14 @@ fun QingLongApp(
             )
         }
         composable<HomeRoute> {
-            Surface(color = MaterialTheme.colorScheme.background) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    androidx.compose.material3.Text(
-                        "登录成功！",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+            QLNavScaffold(
+                onLogout = {
+                    appViewModel.logout()
+                    navController.navigate(LoginRoute) {
+                        popUpTo<HomeRoute> { inclusive = true }
+                    }
                 }
-            }
+            )
         }
     }
 }
