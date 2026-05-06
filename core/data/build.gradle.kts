@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.serialization)
     implementation(libs.okhttp.core)
