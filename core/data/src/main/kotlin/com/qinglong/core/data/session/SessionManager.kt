@@ -36,6 +36,8 @@ class SessionManager @Inject constructor(
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // ── Flow ──
+
     val hostFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_HOST] }
     val usernameFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_USERNAME] }
     val passwordFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_PASSWORD] }
@@ -43,16 +45,23 @@ class SessionManager @Inject constructor(
     val aliasFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_ALIAS] }
     val isLoggedInFlow: Flow<Boolean> = tokenFlow.map { it != null }
 
-    /** 历史账户列表 Flow */
     val accountsFlow: Flow<List<StoredAccount>> = context.sessionDataStore.data.map { prefs ->
         val raw = prefs[KEY_ACCOUNTS_JSON] ?: return@map emptyList()
         try { json.decodeFromString<List<StoredAccount>>(raw) }
         catch (_: Exception) { emptyList() }
     }
 
+    // ── Sync getters (OkHttp 拦截器 / init 块使用) ──
+
     val host: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_HOST] }
+    val username: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_USERNAME] }
+    val password: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_PASSWORD] }
     val token: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_TOKEN] }
+    val alias: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_ALIAS] }
+    val rememberPassword: Boolean get() = runBlocking { context.sessionDataStore.data.first()[KEY_REMEMBER] ?: false }
     val isLoggedIn: Boolean get() = token != null
+
+    // ── 写入 ──
 
     suspend fun saveSession(
         host: String,
@@ -70,7 +79,6 @@ class SessionManager @Inject constructor(
             if (remember) prefs[KEY_PASSWORD] = password else prefs.remove(KEY_PASSWORD)
             prefs[KEY_REMEMBER] = remember
         }
-        // 同时添加到历史账户
         addToHistory(host, username, alias)
     }
 
@@ -89,17 +97,15 @@ class SessionManager @Inject constructor(
         context.sessionDataStore.edit { it.clear() }
     }
 
-    // ── 多账户历史 ──
+    // ── 多账户 ──
 
     private suspend fun addToHistory(host: String, username: String, alias: String?) {
         context.sessionDataStore.edit { prefs ->
             val raw = prefs[KEY_ACCOUNTS_JSON] ?: "[]"
             val list = try { json.decodeFromString<MutableList<StoredAccount>>(raw) }
                 catch (_: Exception) { mutableListOf() }
-            // 去重 + 移到最前
             list.removeAll { it.host == host }
             list.add(0, StoredAccount(host = host, username = username, alias = alias))
-            // 最多保留 20 条
             prefs[KEY_ACCOUNTS_JSON] = json.encodeToString(list.take(20))
         }
     }

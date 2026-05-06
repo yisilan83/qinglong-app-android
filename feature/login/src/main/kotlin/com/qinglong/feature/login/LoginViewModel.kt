@@ -29,19 +29,19 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    private val _host = MutableStateFlow("")
+    private val _host = MutableStateFlow(sessionManager.host ?: "")
     val host = _host.asStateFlow()
 
-    private val _username = MutableStateFlow("")
+    private val _username = MutableStateFlow(sessionManager.username ?: "")
     val username = _username.asStateFlow()
 
-    private val _password = MutableStateFlow("")
+    private val _password = MutableStateFlow(sessionManager.password ?: "")
     val password = _password.asStateFlow()
 
-    private val _alias = MutableStateFlow("")
+    private val _alias = MutableStateFlow(sessionManager.alias ?: "")
     val alias = _alias.asStateFlow()
 
-    private val _rememberPassword = MutableStateFlow(false)
+    private val _rememberPassword = MutableStateFlow(sessionManager.rememberPassword)
     val rememberPassword = _rememberPassword.asStateFlow()
 
     private val _useClientIdMode = MutableStateFlow(false)
@@ -61,22 +61,6 @@ class LoginViewModel @Inject constructor(
 
     val accounts: StateFlow<List<StoredAccount>> = sessionManager.accountsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    init {
-        viewModelScope.launch {
-            val savedHost = sessionManager.host
-            val savedUser = sessionManager.usernameFlow.replayCache.firstOrNull()
-            val savedAlias = sessionManager.aliasFlow.replayCache.firstOrNull()
-            val savedPass = sessionManager.passwordFlow.replayCache.firstOrNull()
-            if (!savedHost.isNullOrBlank()) _host.value = savedHost
-            if (!savedUser.isNullOrBlank()) {
-                _username.value = savedUser
-                _rememberPassword.value = true
-            }
-            if (!savedAlias.isNullOrBlank()) _alias.value = savedAlias
-            if (!savedPass.isNullOrBlank()) _password.value = savedPass
-        }
-    }
 
     fun onHostChanged(value: String) { _host.value = value }
     fun onUsernameChanged(value: String) { _username.value = value }
@@ -119,12 +103,8 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             sessionManager.setHost(host)
-
-            if (_useClientIdMode.value) {
-                loginByClientId(host)
-            } else {
-                loginByPassword(host)
-            }
+            if (_useClientIdMode.value) loginByClientId(host)
+            else loginByPassword(host)
         }
     }
 
@@ -139,7 +119,6 @@ class LoginViewModel @Inject constructor(
     }
 
     private suspend fun loginByClientId(host: String) {
-        // TODO: 对接 /open/auth/token 接口
         _uiState.update { LoginUiState.Error("Client ID 登录模式开发中") }
     }
 
