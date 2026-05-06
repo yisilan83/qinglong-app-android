@@ -36,9 +36,10 @@ android {
 }
 
 dependencies {
-    implementation(project(":feature:login"))
+    implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:login"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -46,8 +47,11 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation("androidx.compose.material3:material3-adaptive")
     debugImplementation(libs.compose.ui.tooling)
 
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.compose.navigation)
