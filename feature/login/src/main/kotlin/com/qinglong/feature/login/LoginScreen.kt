@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -30,13 +28,11 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -59,17 +55,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.qinglong.core.ui.theme.QingLongTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,14 +84,12 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
 
-    // 登录成功处理
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
             onLoginSuccess()
         }
     }
 
-    // 错误 Snackbar
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Error) {
             snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
@@ -106,12 +101,7 @@ fun LoginScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "青龙面板",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
+                title = { Text("青龙面板", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
@@ -129,7 +119,6 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Logo 区域
             Icon(
                 imageVector = Icons.Default.Security,
                 contentDescription = "青龙面板",
@@ -147,35 +136,31 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // 密码登录区域 / 两步验证区域
             AnimatedVisibility(
                 visible = uiState !is LoginUiState.NeedTwoFactor,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    PasswordLoginForm(
-                        host = host,
-                        username = username,
-                        password = password,
-                        alias = alias,
-                        rememberPassword = rememberPassword,
-                        isLoading = uiState is LoginUiState.Loading,
-                        onHostChanged = viewModel::onHostChanged,
-                        onUsernameChanged = viewModel::onUsernameChanged,
-                        onPasswordChanged = viewModel::onPasswordChanged,
-                        onAliasChanged = viewModel::onAliasChanged,
-                        onRememberPasswordChanged = viewModel::onRememberPasswordChanged,
-                        onLoginClick = {
-                            focusManager.clearFocus()
-                            viewModel.login()
-                        },
-                        canLogin = viewModel.canLogin()
-                    )
-                }
+                PasswordLoginForm(
+                    host = host,
+                    username = username,
+                    password = password,
+                    alias = alias,
+                    rememberPassword = rememberPassword,
+                    isLoading = uiState is LoginUiState.Loading,
+                    onHostChanged = viewModel::onHostChanged,
+                    onUsernameChanged = viewModel::onUsernameChanged,
+                    onPasswordChanged = viewModel::onPasswordChanged,
+                    onAliasChanged = viewModel::onAliasChanged,
+                    onRememberPasswordChanged = viewModel::onRememberPasswordChanged,
+                    onLoginClick = {
+                        focusManager.clearFocus()
+                        viewModel.login()
+                    },
+                    canLogin = viewModel.canLogin()
+                )
             }
 
-            // 两步验证区域
             AnimatedVisibility(
                 visible = uiState is LoginUiState.NeedTwoFactor,
                 enter = fadeIn() + expandVertically(),
@@ -183,9 +168,11 @@ fun LoginScreen(
             ) {
                 val state = uiState as? LoginUiState.NeedTwoFactor
                 if (state != null) {
+                    val code = viewModel.twoFactorCode.collectAsStateWithLifecycle().value
+                    val error = viewModel.twoFactorError.collectAsStateWithLifecycle().value
                     TwoFactorForm(
-                        code = viewModel.twoFactorCode.collectAsStateWithLifecycle().value,
-                        error = viewModel.twoFactorError.collectAsStateWithLifecycle().value,
+                        code = code,
+                        error = error,
                         isLoading = uiState is LoginUiState.Loading,
                         onCodeChanged = viewModel::onTwoFactorCodeChanged,
                         onSubmitClick = {
@@ -199,7 +186,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 底部版本信息
             Text(
                 text = "基于青龙面板 API",
                 style = MaterialTheme.typography.labelMedium,
@@ -211,9 +197,6 @@ fun LoginScreen(
     }
 }
 
-/**
- * 密码登录表单
- */
 @Composable
 private fun PasswordLoginForm(
     host: String,
@@ -233,60 +216,42 @@ private fun PasswordLoginForm(
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    // 服务器地址
     OutlinedTextField(
         value = host,
         onValueChange = onHostChanged,
         label = { Text("服务器地址") },
         placeholder = { Text("http://1.1.1.1:5700") },
-        leadingIcon = {
-            Icon(Icons.Default.Cloud, contentDescription = null)
-        },
+        leadingIcon = { Icon(Icons.Default.Cloud, contentDescription = null) },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Uri,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // 用户名
     OutlinedTextField(
         value = username,
         onValueChange = onUsernameChanged,
         label = { Text("用户名") },
         placeholder = { Text("请输入用户名") },
-        leadingIcon = {
-            Icon(Icons.Default.Person, contentDescription = null)
-        },
+        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // 密码
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChanged,
         label = { Text("密码") },
         placeholder = { Text("请输入密码") },
-        leadingIcon = {
-            Icon(Icons.Default.Lock, contentDescription = null)
-        },
+        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                 Icon(
@@ -300,41 +265,28 @@ private fun PasswordLoginForm(
         else PasswordVisualTransformation(),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // 别名（选填）
     OutlinedTextField(
         value = alias,
         onValueChange = onAliasChanged,
         label = { Text("别名（选填）") },
         placeholder = { Text("仅用于展示") },
-        leadingIcon = {
-            Icon(Icons.Default.Person, contentDescription = null)
-        },
+        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-            onDone = { onLoginClick() }
-        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
         enabled = !isLoading
     )
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // 记住密码
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -353,12 +305,9 @@ private fun PasswordLoginForm(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // 登录按钮
     Button(
         onClick = onLoginClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
+        modifier = Modifier.fillMaxWidth().height(52.dp),
         enabled = canLogin && !isLoading,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
@@ -373,18 +322,11 @@ private fun PasswordLoginForm(
                 strokeWidth = 2.dp
             )
         } else {
-            Text(
-                text = "登 录",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Text("登 录", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }
 
-/**
- * 两步验证表单
- */
 @Composable
 private fun TwoFactorForm(
     code: String,
@@ -394,13 +336,7 @@ private fun TwoFactorForm(
     onSubmitClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-
-    // 返回按钮
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBackClick) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -417,7 +353,6 @@ private fun TwoFactorForm(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // 两步验证图标
     Box(
         modifier = Modifier
             .size(72.dp)
@@ -459,35 +394,23 @@ private fun TwoFactorForm(
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    // 验证码输入
     OutlinedTextField(
         value = code,
         onValueChange = { value ->
-            // 限制6位数字
             if (value.length <= 6 && value.all { it.isDigit() }) {
                 onCodeChanged(value)
             }
         },
         label = { Text("验证码") },
         placeholder = { Text("请输入6位验证码") },
-        leadingIcon = {
-            Icon(Icons.Default.Security, contentDescription = null)
-        },
+        leadingIcon = { Icon(Icons.Default.Security, contentDescription = null) },
         isError = error != null,
-        supportingText = error?.let {
-            { Text(it, color = MaterialTheme.colorScheme.error) }
-        },
+        supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.NumberPassword,
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-            onDone = { onSubmitClick() }
-        ),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onSubmitClick() }),
         enabled = !isLoading,
-        // 将验证码文本居中显示，增加字号
         textStyle = MaterialTheme.typography.headlineSmall.copy(
             textAlign = TextAlign.Center,
             letterSpacing = 8.sp
@@ -496,17 +419,12 @@ private fun TwoFactorForm(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // 验证按钮
     Button(
         onClick = onSubmitClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
+        modifier = Modifier.fillMaxWidth().height(52.dp),
         enabled = code.length >= 6 && !isLoading,
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -515,11 +433,44 @@ private fun TwoFactorForm(
                 strokeWidth = 2.dp
             )
         } else {
-            Text(
-                text = "验 证",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Text("验 证", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PasswordLoginFormPreview() {
+    QingLongTheme {
+        PasswordLoginForm(
+            host = "",
+            username = "",
+            password = "",
+            alias = "",
+            rememberPassword = false,
+            isLoading = false,
+            onHostChanged = {},
+            onUsernameChanged = {},
+            onPasswordChanged = {},
+            onAliasChanged = {},
+            onRememberPasswordChanged = {},
+            onLoginClick = {},
+            canLogin = false
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TwoFactorFormPreview() {
+    QingLongTheme {
+        TwoFactorForm(
+            code = "123",
+            error = null,
+            isLoading = false,
+            onCodeChanged = {},
+            onSubmitClick = {},
+            onBackClick = {}
+        )
     }
 }
