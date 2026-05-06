@@ -7,7 +7,6 @@ import androidx.navigation.compose.rememberNavController
 import com.qinglong.feature.login.HomeRoute
 import com.qinglong.feature.login.LoginRoute
 import com.qinglong.feature.login.LoginScreen
-import com.qinglong.feature.login.LoginUiState
 
 @Composable
 fun QingLongApp() {
