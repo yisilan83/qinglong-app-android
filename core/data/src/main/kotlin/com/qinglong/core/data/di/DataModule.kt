@@ -1,7 +1,7 @@
 package com.qinglong.core.data.di
 
-import com.qinglong.core.data.repository.AuthRepositoryImpl
-import com.qinglong.core.domain.AuthRepository
+import com.qinglong.core.data.repository.*
+import com.qinglong.core.domain.*
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,5 +14,25 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEnvRepository(impl: EnvRepositoryImpl): EnvRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScriptRepository(impl: ScriptRepositoryImpl): ScriptRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDependencyRepository(impl: DependencyRepositoryImpl): DependencyRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindConfigRepository(impl: ConfigRepositoryImpl): ConfigRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLogRepository(impl: LogRepositoryImpl): LogRepository
 }
