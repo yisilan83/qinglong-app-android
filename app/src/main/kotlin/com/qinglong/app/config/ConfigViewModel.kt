@@ -31,7 +31,7 @@ class ConfigViewModel @Inject constructor(
             _loading.value = true
             try {
                 val r = api.getConfigFiles()
-                if (r.code == 200 && r.data != null) _files.value = r.data
+                if (r.code == 200 && r.data != null) _files.value = r.data ?: emptyList()
             } catch (_: Exception) {}
             _loading.value = false
         }

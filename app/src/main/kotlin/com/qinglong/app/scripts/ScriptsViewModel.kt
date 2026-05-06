@@ -31,7 +31,7 @@ class ScriptsViewModel @Inject constructor(
             _loading.value = true
             try {
                 val r = api.getScripts()
-                if (r.code == 200 && r.data != null) _scripts.value = r.data
+                if (r.code == 200 && r.data != null) _scripts.value = r.data ?: emptyList()
             } catch (_: Exception) {}
             _loading.value = false
         }

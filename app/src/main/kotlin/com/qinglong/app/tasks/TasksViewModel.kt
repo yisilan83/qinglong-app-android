@@ -32,7 +32,7 @@ class TasksViewModel @Inject constructor(
             _loading.value = true
             try {
                 val r = api.getTasks()
-                if (r.code == 200 && r.data != null) _tasks.value = r.data
+                if (r.code == 200 && r.data != null) _tasks.value = r.data ?: emptyList()
             } catch (_: Exception) {}
             _loading.value = false
         }

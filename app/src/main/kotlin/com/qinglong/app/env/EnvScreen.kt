@@ -120,8 +120,9 @@ private fun EnvItem(env: EnvInfo, onToggle: () -> Unit, onDelete: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(env.name ?: "", style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (!env.remarks.isNullOrBlank()) {
-                    Text(env.remarks, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                val remarksText = env.remarks
+                if (!remarksText.isNullOrBlank()) {
+                    Text(remarksText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
                 Text(env.value ?: "", style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
