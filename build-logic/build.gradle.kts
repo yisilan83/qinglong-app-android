@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.`kotlin-dsl`
-
 plugins {
     `kotlin-dsl`
 }
@@ -11,5 +9,8 @@ repositories {
 }
 
 dependencies {
-    implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
+    // Convention plugins need AGP and Kotlin plugin APIs on the classpath.
+    // These are resolved from the repositories above.
+    implementation("com.android.tools.build:gradle:8.7.3")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
 }
