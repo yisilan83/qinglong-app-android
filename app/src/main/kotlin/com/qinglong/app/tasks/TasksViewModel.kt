@@ -22,20 +22,37 @@ class TasksViewModel @Inject constructor(
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
 
+    private val _currentPage = MutableStateFlow(1)
+    private val _hasMore = MutableStateFlow(false)
+
     private val _taskLog = MutableStateFlow<String?>(null)
     val taskLog = _taskLog.asStateFlow()
 
     init { loadTasks() }
 
-    fun loadTasks() {
+    fun loadTasks(page: Int = 1) {
         viewModelScope.launch {
             _loading.value = true
             try {
-                val r = api.getTasks()
-                if (r.code == 200 && r.data != null) _tasks.value = r.data ?: emptyList()
+                val r = api.getTasks(page = page, size = 50)
+                if (r.code == 200 && r.data != null) {
+                    val list = r.data.data.orEmpty()
+                    val total = r.data.total ?: 0
+                    if (page == 1) {
+                        _tasks.value = list
+                    } else {
+                        _tasks.value = _tasks.value + list
+                    }
+                    _currentPage.value = page
+                    _hasMore.value = list.size >= 50
+                }
             } catch (_: Exception) {}
             _loading.value = false
         }
+    }
+
+    fun loadMore() {
+        if (!_loading.value && _hasMore.value) loadTasks(_currentPage.value + 1)
     }
 
     fun runTask(task: TaskInfo) {

@@ -3,6 +3,7 @@ package com.qinglong.app.env
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qinglong.core.data.remote.QLApiService
+import com.qinglong.core.model.EnvCreateRequest
 import com.qinglong.core.model.EnvInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +57,7 @@ class EnvViewModel @Inject constructor(
     fun addEnv(name: String, value: String, remarks: String) {
         viewModelScope.launch {
             try {
-                api.addEnv(listOf(mapOf("name" to name, "value" to value, "remarks" to remarks)))
+                api.addEnvs(listOf(EnvCreateRequest(name, value, remarks)))
             } catch (_: Exception) {}
             loadEnvs()
         }
