@@ -3,14 +3,15 @@ package com.qinglong.core.data.remote
 import com.qinglong.core.model.ApiResponse
 import com.qinglong.core.model.LoginData
 import com.qinglong.core.model.LoginRequest
+import com.qinglong.core.model.ScriptFile
 import com.qinglong.core.model.SystemInfo
 import com.qinglong.core.model.TaskInfo
-import com.qinglong.core.model.TaskListResponse
 import com.qinglong.core.model.TwoFactorRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface QLApiService {
@@ -34,5 +35,14 @@ interface QLApiService {
     suspend fun stopTasks(@Body ids: List<String>): ApiResponse<Unit>
 
     @GET("api/crons/{id}/log")
-    suspend fun getTaskLog(@retrofit2.http.Path("id") id: String): ApiResponse<String>
+    suspend fun getTaskLog(@Path("id") id: String): ApiResponse<String>
+
+    @GET("api/scripts")
+    suspend fun getScripts(): ApiResponse<List<ScriptFile>>
+
+    @GET("api/scripts/{filename}")
+    suspend fun getScriptContent(
+        @Path("filename") filename: String,
+        @Query("path") path: String? = null
+    ): ApiResponse<String>
 }
