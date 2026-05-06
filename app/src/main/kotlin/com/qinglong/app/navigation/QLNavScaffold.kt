@@ -19,17 +19,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qinglong.app.config.ConfigScreen
 import com.qinglong.app.env.EnvScreen
 import com.qinglong.app.home.HomeScreen
 import com.qinglong.app.scripts.ScriptsScreen
 import com.qinglong.app.settings.SettingsScreen
 import com.qinglong.app.tasks.TasksScreen
 
-private data class BottomNavItem(
-    val route: Any,
-    val label: String,
-    val icon: ImageVector
-)
+private data class BottomNavItem(val route: Any, val label: String, val icon: ImageVector)
 
 private val bottomNavItems = listOf(
     BottomNavItem(HomeRoute, "首页", Icons.Default.Home),
@@ -69,7 +66,13 @@ fun QLNavScaffold(onLogout: () -> Unit) {
             composable<TasksRoute> { TasksScreen() }
             composable<ScriptsRoute> { ScriptsScreen() }
             composable<EnvRoute> { EnvScreen() }
-            composable<SettingsRoute> { SettingsScreen(onLogout = onLogout) }
+            composable<SettingsRoute> {
+                SettingsScreen(
+                    onLogout = onLogout,
+                    onNavigateToConfig = { navController.navigate(ConfigRoute) }
+                )
+            }
+            composable<ConfigRoute> { ConfigScreen() }
         }
     }
 }

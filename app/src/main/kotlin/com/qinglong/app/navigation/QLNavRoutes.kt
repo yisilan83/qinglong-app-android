@@ -8,3 +8,4 @@ import kotlinx.serialization.Serializable
 @Serializable object ScriptsRoute
 @Serializable object EnvRoute
 @Serializable object SettingsRoute
+@Serializable object ConfigRoute
