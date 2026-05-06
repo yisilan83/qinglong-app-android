@@ -7,7 +7,6 @@ import com.qinglong.core.model.TaskInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,16 +34,19 @@ class TasksViewModel @Inject constructor(
             _loading.value = true
             try {
                 val r = api.getTasks(page = page, size = 50)
-                if (r.code == 200 && r.data != null) {
-                    val list = r.data.data.orEmpty()
-                    val total = r.data.total ?: 0
-                    if (page == 1) {
-                        _tasks.value = list
-                    } else {
-                        _tasks.value = _tasks.value + list
+                if (r.code == 200) {
+                    val listData = r.data
+                    if (listData != null) {
+                        val list = listData.data.orEmpty()
+                        val total = listData.total ?: 0
+                        if (page == 1) {
+                            _tasks.value = list
+                        } else {
+                            _tasks.value = _tasks.value + list
+                        }
+                        _currentPage.value = page
+                        _hasMore.value = list.size >= 50
                     }
-                    _currentPage.value = page
-                    _hasMore.value = list.size >= 50
                 }
             } catch (_: Exception) {}
             _loading.value = false
