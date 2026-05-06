@@ -1,28 +1,34 @@
 plugins {
-    alias(libs.plugins.ql.android.library)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
     namespace = "com.qinglong.core.data"
+    compileSdk = 34
+    defaultConfig { minSdk = 24 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
 }
 
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
-
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-
-    // Retrofit + OkHttp
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.serialization)
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
-
-    // DataStore
     implementation(libs.datastore.preferences)
-
-    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

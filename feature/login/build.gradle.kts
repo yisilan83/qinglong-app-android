@@ -1,19 +1,30 @@
 plugins {
-    alias(libs.plugins.ql.android.feature)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
     namespace = "com.qinglong.feature.login"
-    buildFeatures {
-        compose = true
+    compileSdk = 34
+    defaultConfig { minSdk = 24 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:ui"))
     implementation(project(":core:data"))
 
-    // Compose BOM
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)
@@ -22,20 +33,13 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
-
-    // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.compose.hilt.navigation)
-
-    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)

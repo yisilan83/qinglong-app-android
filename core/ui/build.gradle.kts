@@ -1,19 +1,23 @@
 plugins {
-    alias(libs.plugins.ql.android.library)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.qinglong.core.ui"
-    buildFeatures {
-        compose = true
+    compileSdk = 34
+    defaultConfig { minSdk = 24 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
     implementation(project(":core:model"))
-
-    // Compose BOM
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)
@@ -22,14 +26,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
-
-    // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    // Coil
     implementation(libs.coil.compose)
-
-    // DataStore (Theme preferences)
     implementation(libs.datastore.preferences)
 }

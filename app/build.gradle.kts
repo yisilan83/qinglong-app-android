@@ -1,18 +1,44 @@
 plugins {
-    alias(libs.plugins.ql.android.application)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.qinglong.app"
+
+    defaultConfig {
+        applicationId = "com.qinglong.app"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
-    // Feature modules
     implementation(project(":feature:login"))
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
 
-    // Compose BOM
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)
@@ -21,27 +47,17 @@ dependencies {
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
 
-    // Activity
     implementation(libs.androidx.activity.compose)
-
-    // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
-
-    // Navigation
     implementation(libs.compose.navigation)
     implementation(libs.compose.hilt.navigation)
-
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.hilt.android.testing)
-
-    // DataStore
+    implementation(libs.androidx.core.ktx)
     implementation(libs.datastore.preferences)
 
-    // Core
-    implementation(libs.androidx.core.ktx)
-
-    // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
