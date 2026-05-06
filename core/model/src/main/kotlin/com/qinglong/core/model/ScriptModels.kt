@@ -6,10 +6,34 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ScriptFile(
     val title: String? = null,
-    val key: String? = null,
-    val type: String? = null,   // "directory" or "file"
-    val children: List<ScriptFile>? = null,
     @SerialName("isLeaf") val isLeaf: Boolean? = null,
+    @SerialName("isDir") val isDir: Boolean? = null,
+    val children: List<ScriptFile>? = null,
     val size: Long? = null,
-    @SerialName("modify_time") val modifyTime: Long? = null
+    @SerialName("mtime") val mtime: Double? = null,
+    val key: String? = null,
+    val type: String? = null
+) {
+    val isDirectory: Boolean get() = isDir == true || isLeaf == false
+}
+
+@Serializable
+data class ScriptUpdateRequest(
+    val filename: String,
+    val path: String = "",
+    val content: String
+)
+
+@Serializable
+data class ScriptDeleteRequest(
+    val filename: String,
+    val path: String = "",
+    val type: String = "file"   // "file" or "directory"
+)
+
+@Serializable
+data class ScriptAddRequest(
+    val filename: String,
+    val path: String = "",
+    val content: String = ""
 )

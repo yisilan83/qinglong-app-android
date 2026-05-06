@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SystemInfo(
     val version: String? = null,
+    val initialized: Boolean? = null,
     @SerialName("os_type") val osType: String? = null,
     @SerialName("os_version") val osVersion: String? = null,
     @SerialName("cpu_usage") val cpuUsage: Double? = null,
