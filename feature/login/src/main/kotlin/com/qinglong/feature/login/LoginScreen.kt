@@ -111,7 +111,7 @@ fun LoginScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("青龙面板", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("AutoPanel", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
@@ -131,7 +131,7 @@ fun LoginScreen(
 
             Icon(
                 imageVector = Icons.Default.Security,
-                contentDescription = "青龙面板",
+                contentDescription = "AutoPanel",
                 modifier = Modifier.size(72.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -223,7 +223,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "基于青龙面板 API",
+                text = "AutoPanel",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
@@ -291,7 +291,7 @@ private fun PasswordLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = username, onValueChange = onUsernameChanged,
@@ -302,7 +302,7 @@ private fun PasswordLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = password, onValueChange = onPasswordChanged,
@@ -322,7 +322,7 @@ private fun PasswordLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = alias, onValueChange = onAliasChanged,
@@ -333,13 +333,13 @@ private fun PasswordLoginForm(
         keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
         Text("记住密码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Button(
         onClick = onLoginClick,
@@ -377,7 +377,7 @@ private fun ClientIdLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = clientId, onValueChange = onClientIdChanged,
@@ -388,7 +388,7 @@ private fun ClientIdLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = clientSecret, onValueChange = onClientSecretChanged,
@@ -408,7 +408,7 @@ private fun ClientIdLoginForm(
         keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     OutlinedTextField(
         value = alias, onValueChange = onAliasChanged,
@@ -419,13 +419,13 @@ private fun ClientIdLoginForm(
         keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
         enabled = !isLoading
     )
-    Spacer(Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
         Text("记住凭证", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Button(
         onClick = onLoginClick,
@@ -453,7 +453,7 @@ private fun TwoFactorForm(
         }
         Text("返回登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Box(
         Modifier.size(72.dp).clip(RoundedCornerShape(16.dp)).background(
@@ -462,11 +462,11 @@ private fun TwoFactorForm(
     ) {
         Icon(Icons.Default.Security, null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.primary)
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(24.dp))
     Text("两步验证", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-    Spacer(Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(8.dp))
     Text("您的账户已开启两步验证，请输入验证码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-    Spacer(Modifier.height(32.dp))
+    Spacer(modifier = Modifier.height(32.dp))
 
     OutlinedTextField(
         value = code,
@@ -481,7 +481,7 @@ private fun TwoFactorForm(
         enabled = !isLoading,
         textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp)
     )
-    Spacer(Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Button(
         onClick = onSubmitClick, modifier = Modifier.fillMaxWidth().height(52.dp),
