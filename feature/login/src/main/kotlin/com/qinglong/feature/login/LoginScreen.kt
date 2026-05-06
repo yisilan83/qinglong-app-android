@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -282,77 +283,77 @@ private fun PasswordLoginForm(
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
 
-    OutlinedTextField(
-        value = host, onValueChange = onHostChanged,
-        label = { Text("服务器地址") }, placeholder = { Text("http://1.1.1.1:5700") },
-        leadingIcon = { Icon(Icons.Default.Cloud, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = username, onValueChange = onUsernameChanged,
-        label = { Text("用户名") }, placeholder = { Text("请输入用户名") },
-        leadingIcon = { Icon(Icons.Default.Person, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = password, onValueChange = onPasswordChanged,
-        label = { Text("密码") }, placeholder = { Text("请输入密码") },
-        leadingIcon = { Icon(Icons.Default.Lock, null) },
-        trailingIcon = {
-            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(
-                    if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
-                )
-            }
-        },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = alias, onValueChange = onAliasChanged,
-        label = { Text("别名（选填）") }, placeholder = { Text("仅用于展示") },
-        leadingIcon = { Icon(Icons.Default.Person, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
-        Text("记住密码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Button(
-        onClick = onLoginClick,
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        enabled = canLogin && !isLoading,
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Text("登 录", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        OutlinedTextField(
+            value = host, onValueChange = onHostChanged,
+            label = { Text("服务器地址") }, placeholder = { Text("http://1.1.1.1:5700") },
+            leadingIcon = { Icon(Icons.Default.Cloud, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = username, onValueChange = onUsernameChanged,
+            label = { Text("用户名") }, placeholder = { Text("请输入用户名") },
+            leadingIcon = { Icon(Icons.Default.Person, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = password, onValueChange = onPasswordChanged,
+            label = { Text("密码") }, placeholder = { Text("请输入密码") },
+            leadingIcon = { Icon(Icons.Default.Lock, null) },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = alias, onValueChange = onAliasChanged,
+            label = { Text("别名（选填）") }, placeholder = { Text("仅用于展示") },
+            leadingIcon = { Icon(Icons.Default.Person, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
+            enabled = !isLoading
+        )
+
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
+            Text("记住密码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        Button(
+            onClick = onLoginClick,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = canLogin && !isLoading,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+        ) {
+            if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+            else Text("登 录", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        }
     }
 }
 
@@ -368,77 +369,77 @@ private fun ClientIdLoginForm(
     var secretVisible by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
 
-    OutlinedTextField(
-        value = host, onValueChange = onHostChanged,
-        label = { Text("服务器地址") }, placeholder = { Text("http://1.1.1.1:5700") },
-        leadingIcon = { Icon(Icons.Default.Cloud, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = clientId, onValueChange = onClientIdChanged,
-        label = { Text("Client ID") }, placeholder = { Text("请输入 Client ID") },
-        leadingIcon = { Icon(Icons.Default.VpnKey, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = clientSecret, onValueChange = onClientSecretChanged,
-        label = { Text("Client Secret") }, placeholder = { Text("请输入 Client Secret") },
-        leadingIcon = { Icon(Icons.Default.Key, null) },
-        trailingIcon = {
-            IconButton(onClick = { secretVisible = !secretVisible }) {
-                Icon(
-                    if (secretVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (secretVisible) "隐藏" else "显示"
-                )
-            }
-        },
-        visualTransformation = if (secretVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-        keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = alias, onValueChange = onAliasChanged,
-        label = { Text("别名（选填）") }, placeholder = { Text("仅用于展示") },
-        leadingIcon = { Icon(Icons.Default.Person, null) },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
-        enabled = !isLoading
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
-        Text("记住凭证", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Button(
-        onClick = onLoginClick,
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        enabled = canLogin && !isLoading,
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Text("登 录", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        OutlinedTextField(
+            value = host, onValueChange = onHostChanged,
+            label = { Text("服务器地址") }, placeholder = { Text("http://1.1.1.1:5700") },
+            leadingIcon = { Icon(Icons.Default.Cloud, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = clientId, onValueChange = onClientIdChanged,
+            label = { Text("Client ID") }, placeholder = { Text("请输入 Client ID") },
+            leadingIcon = { Icon(Icons.Default.VpnKey, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = clientSecret, onValueChange = onClientSecretChanged,
+            label = { Text("Client Secret") }, placeholder = { Text("请输入 Client Secret") },
+            leadingIcon = { Icon(Icons.Default.Key, null) },
+            trailingIcon = {
+                IconButton(onClick = { secretVisible = !secretVisible }) {
+                    Icon(
+                        if (secretVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (secretVisible) "隐藏" else "显示"
+                    )
+                }
+            },
+            visualTransformation = if (secretVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
+            enabled = !isLoading
+        )
+
+        OutlinedTextField(
+            value = alias, onValueChange = onAliasChanged,
+            label = { Text("别名（选填）") }, placeholder = { Text("仅用于展示") },
+            leadingIcon = { Icon(Icons.Default.Person, null) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
+            enabled = !isLoading
+        )
+
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(rememberPassword, onRememberPasswordChanged, enabled = !isLoading)
+            Text("记住凭证", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        Button(
+            onClick = onLoginClick,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = canLogin && !isLoading,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+        ) {
+            if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+            else Text("登 录", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        }
     }
 }
 
@@ -447,49 +448,51 @@ private fun TwoFactorForm(
     code: String, error: String?, isLoading: Boolean,
     onCodeChanged: (String) -> Unit, onSubmitClick: () -> Unit, onBackClick: () -> Unit
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBackClick) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text("返回登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text("返回登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    Spacer(modifier = Modifier.height(24.dp))
 
-    Box(
-        Modifier.size(72.dp).clip(RoundedCornerShape(16.dp)).background(
-            Brush.linearGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.secondaryContainer))
-        ), contentAlignment = Alignment.Center
-    ) {
-        Icon(Icons.Default.Security, null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.primary)
-    }
-    Spacer(modifier = Modifier.height(24.dp))
-    Text("两步验证", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-    Spacer(modifier = Modifier.height(8.dp))
-    Text("您的账户已开启两步验证，请输入验证码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-    Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            Modifier.size(72.dp).clip(RoundedCornerShape(16.dp)).background(
+                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.secondaryContainer))
+            ), contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Security, null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.primary)
+        }
 
-    OutlinedTextField(
-        value = code,
-        onValueChange = { if (it.length <= 6 && it.all { c -> c.isDigit() }) onCodeChanged(it) },
-        label = { Text("验证码") }, placeholder = { Text("请输入6位验证码") },
-        leadingIcon = { Icon(Icons.Default.Security, null) },
-        isError = error != null,
-        supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-        singleLine = true, modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onSubmitClick() }),
-        enabled = !isLoading,
-        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp)
-    )
-    Spacer(modifier = Modifier.height(24.dp))
+        Text("两步验证", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
+        Text("您的账户已开启两步验证，请输入验证码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
 
-    Button(
-        onClick = onSubmitClick, modifier = Modifier.fillMaxWidth().height(52.dp),
-        enabled = code.length >= 6 && !isLoading, shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
-        if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Text("验 证", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        OutlinedTextField(
+            value = code,
+            onValueChange = { if (it.length <= 6 && it.all { c -> c.isDigit() }) onCodeChanged(it) },
+            label = { Text("验证码") }, placeholder = { Text("请输入6位验证码") },
+            leadingIcon = { Icon(Icons.Default.Security, null) },
+            isError = error != null,
+            supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onSubmitClick() }),
+            enabled = !isLoading,
+            textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp)
+        )
+
+        Button(
+            onClick = onSubmitClick, modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = code.length >= 6 && !isLoading, shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+            else Text("验 证", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
+        }
     }
 }
 
