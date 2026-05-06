@@ -2,6 +2,7 @@ package com.qinglong.feature.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qinglong.core.data.session.SessionManager
 import com.qinglong.core.domain.LoginTwoFactorUseCase
 import com.qinglong.core.domain.LoginUseCase
 import com.qinglong.core.domain.SaveCredentialsUseCase
@@ -17,7 +18,8 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val loginTwoFactorUseCase: LoginTwoFactorUseCase,
-    private val saveCredentialsUseCase: SaveCredentialsUseCase
+    private val saveCredentialsUseCase: SaveCredentialsUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -71,16 +73,13 @@ class LoginViewModel @Inject constructor(
         _uiState.update { LoginUiState.Loading }
 
         viewModelScope.launch {
-            // 先保存 host（让 Retrofit 知道请求哪个服务器）
-            saveCredentialsUseCase(host, "", "", "")
+            sessionManager.setHost(host)
             when (val result = loginUseCase(_username.value, _password.value)) {
                 is LoginResult.Success -> onLoginSuccess(host, result)
                 is LoginResult.NeedTwoFactor -> _uiState.update {
                     LoginUiState.NeedTwoFactor(_username.value, _password.value)
                 }
-                is LoginResult.Error -> _uiState.update {
-                    LoginUiState.Error(result.message)
-                }
+                is LoginResult.Error -> _uiState.update { LoginUiState.Error(result.message) }
             }
         }
     }
@@ -91,7 +90,6 @@ class LoginViewModel @Inject constructor(
             _twoFactorError.value = "请输入验证码"
             return
         }
-
         val state = _uiState.value as? LoginUiState.NeedTwoFactor ?: return
 
         _uiState.update { LoginUiState.Loading }
