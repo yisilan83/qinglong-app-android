@@ -1,20 +1,7 @@
 package com.qinglong.core.data.remote
 
-import com.qinglong.core.model.ApiResponse
-import com.qinglong.core.model.EnvInfo
-import com.qinglong.core.model.LoginData
-import com.qinglong.core.model.LoginRequest
-import com.qinglong.core.model.ScriptFile
-import com.qinglong.core.model.SystemInfo
-import com.qinglong.core.model.TaskInfo
-import com.qinglong.core.model.TwoFactorRequest
-import okhttp3.ResponseBody
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
-import retrofit2.http.Query
+import com.qinglong.core.model.*
+import retrofit2.http.*
 
 interface QLApiService {
 
@@ -30,39 +17,27 @@ interface QLApiService {
     @GET("api/crons")
     suspend fun getTasks(@Query("searchValue") search: String = ""): ApiResponse<List<TaskInfo>>
 
-    @PUT("api/crons/run")
-    suspend fun runTasks(@Body ids: List<String>): ApiResponse<Unit>
+    @PUT("api/crons/run") suspend fun runTasks(@Body ids: List<String>): ApiResponse<Unit>
+    @PUT("api/crons/stop") suspend fun stopTasks(@Body ids: List<String>): ApiResponse<Unit>
+    @GET("api/crons/{id}/log") suspend fun getTaskLog(@Path("id") id: String): ApiResponse<String>
 
-    @PUT("api/crons/stop")
-    suspend fun stopTasks(@Body ids: List<String>): ApiResponse<Unit>
+    @GET("api/scripts") suspend fun getScripts(): ApiResponse<List<ScriptFile>>
+    @GET("api/scripts/{filename}") suspend fun getScriptContent(@Path("filename") f: String, @Query("path") p: String? = null): ApiResponse<String>
 
-    @GET("api/crons/{id}/log")
-    suspend fun getTaskLog(@Path("id") id: String): ApiResponse<String>
+    @GET("api/envs") suspend fun getEnvs(@Query("searchValue") s: String = ""): ApiResponse<List<EnvInfo>>
+    @POST("api/envs") suspend fun addEnv(@Body d: List<Map<String, String>>): ApiResponse<Unit>
+    @PUT("api/envs") suspend fun updateEnv(@Body d: Map<String, String>): ApiResponse<Unit>
+    @PUT("api/envs/enable") suspend fun enableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    @PUT("api/envs/disable") suspend fun disableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    @HTTP(method = "DELETE", path = "api/envs", hasBody = true) suspend fun deleteEnvs(@Body ids: List<String>): ApiResponse<Unit>
 
-    @GET("api/scripts")
-    suspend fun getScripts(): ApiResponse<List<ScriptFile>>
+    @GET("api/configs/files") suspend fun getConfigFiles(): ApiResponse<List<ConfigFile>>
+    @GET("api/configs/{name}") suspend fun getConfigContent(@Path("name") n: String): ApiResponse<String>
+    @POST("api/configs/save") suspend fun saveConfig(@Body d: Map<String, String>): ApiResponse<Unit>
 
-    @GET("api/scripts/{filename}")
-    suspend fun getScriptContent(
-        @Path("filename") filename: String,
-        @Query("path") path: String? = null
-    ): ApiResponse<String>
+    @GET("api/dependencies") suspend fun getDependencies(@Query("type") t: String = ""): ApiResponse<List<DependencyInfo>>
 
-    @GET("api/envs")
-    suspend fun getEnvs(@Query("searchValue") search: String = ""): ApiResponse<List<EnvInfo>>
-
-    @POST("api/envs")
-    suspend fun addEnv(@Body data: List<Map<String, String>>): ApiResponse<Unit>
-
-    @PUT("api/envs")
-    suspend fun updateEnv(@Body data: Map<String, String>): ApiResponse<Unit>
-
-    @PUT("api/envs/enable")
-    suspend fun enableEnvs(@Body ids: List<String>): ApiResponse<Unit>
-
-    @PUT("api/envs/disable")
-    suspend fun disableEnvs(@Body ids: List<String>): ApiResponse<Unit>
-
-    @retrofit2.http.HTTP(method = "DELETE", path = "api/envs", hasBody = true)
-    suspend fun deleteEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    @GET("api/subscriptions") suspend fun getSubscriptions(@Query("searchValue") s: String = ""): ApiResponse<List<SubscribeInfo>>
+    @PUT("api/subscriptions/run") suspend fun runSubscriptions(@Body ids: List<Int>): ApiResponse<Unit>
+    @PUT("api/subscriptions/stop") suspend fun stopSubscriptions(@Body ids: List<Int>): ApiResponse<Unit>
 }
