@@ -1,24 +1,12 @@
 package com.qinglong.feature.login
 
-/**
- * 登录 UI 状态
- */
+import com.qinglong.core.data.session.StoredAccount
+
 sealed interface LoginUiState {
-    /** 初始 / 空闲 */
     data object Idle : LoginUiState
-
-    /** 正在登录中 */
     data object Loading : LoginUiState
-
-    /** 需要两步验证 */
-    data class NeedTwoFactor(
-        val username: String,
-        val password: String
-    ) : LoginUiState
-
-    /** 登录成功 */
+    data class Ready(val accounts: List<StoredAccount>) : LoginUiState
+    data class NeedTwoFactor(val username: String, val password: String) : LoginUiState
     data object Success : LoginUiState
-
-    /** 登录失败 */
     data class Error(val message: String) : LoginUiState
 }

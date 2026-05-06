@@ -12,18 +12,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.sessionDataStore: DataStore<Preferences> by preferencesDataStore(name = "ql_session")
 
-/**
- * 全局会话管理器。
- * 负责：
- * - 持久化 Host / Token / 账户信息
- * - 提供同步/异步两种 Token 访问（OkHttp 拦截器用同步，其他用 Flow）
- * - 登录状态判断
- */
 @Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext private val context: Context
@@ -35,27 +31,28 @@ class SessionManager @Inject constructor(
         private val KEY_TOKEN = stringPreferencesKey("token")
         private val KEY_ALIAS = stringPreferencesKey("alias")
         private val KEY_REMEMBER = booleanPreferencesKey("remember_password")
+        private val KEY_ACCOUNTS_JSON = stringPreferencesKey("accounts_json")
     }
 
-    // ── Flow 方式（UI 层推荐） ──
+    private val json = Json { ignoreUnknownKeys = true }
 
     val hostFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_HOST] }
     val usernameFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_USERNAME] }
+    val passwordFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_PASSWORD] }
     val tokenFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_TOKEN] }
+    val aliasFlow: Flow<String?> = context.sessionDataStore.data.map { it[KEY_ALIAS] }
     val isLoggedInFlow: Flow<Boolean> = tokenFlow.map { it != null }
 
-    // ── 同步方式（OkHttp 拦截器用） ──
+    /** 历史账户列表 Flow */
+    val accountsFlow: Flow<List<StoredAccount>> = context.sessionDataStore.data.map { prefs ->
+        val raw = prefs[KEY_ACCOUNTS_JSON] ?: return@map emptyList()
+        try { json.decodeFromString<List<StoredAccount>>(raw) }
+        catch (_: Exception) { emptyList() }
+    }
 
-    val host: String?
-        get() = runBlocking { context.sessionDataStore.data.first()[KEY_HOST] }
-
-    val token: String?
-        get() = runBlocking { context.sessionDataStore.data.first()[KEY_TOKEN] }
-
-    val isLoggedIn: Boolean
-        get() = token != null
-
-    // ── 写入 ──
+    val host: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_HOST] }
+    val token: String? get() = runBlocking { context.sessionDataStore.data.first()[KEY_TOKEN] }
+    val isLoggedIn: Boolean get() = token != null
 
     suspend fun saveSession(
         host: String,
@@ -70,20 +67,17 @@ class SessionManager @Inject constructor(
             prefs[KEY_USERNAME] = username
             prefs[KEY_TOKEN] = token
             if (alias != null) prefs[KEY_ALIAS] = alias
-            if (remember) prefs[KEY_PASSWORD] = password
-            else prefs.remove(KEY_PASSWORD)
+            if (remember) prefs[KEY_PASSWORD] = password else prefs.remove(KEY_PASSWORD)
             prefs[KEY_REMEMBER] = remember
         }
+        // 同时添加到历史账户
+        addToHistory(host, username, alias)
     }
 
-    /** 仅更新 Host（登录前保存服务器地址） */
     suspend fun setHost(host: String) {
-        context.sessionDataStore.edit { prefs ->
-            prefs[KEY_HOST] = host
-        }
+        context.sessionDataStore.edit { prefs -> prefs[KEY_HOST] = host }
     }
 
-    /** 清除登录态 */
     suspend fun clearSession() {
         context.sessionDataStore.edit { prefs ->
             prefs.remove(KEY_TOKEN)
@@ -91,8 +85,39 @@ class SessionManager @Inject constructor(
         }
     }
 
-    /** 清除全部数据 */
     suspend fun clearAll() {
         context.sessionDataStore.edit { it.clear() }
     }
+
+    // ── 多账户历史 ──
+
+    private suspend fun addToHistory(host: String, username: String, alias: String?) {
+        context.sessionDataStore.edit { prefs ->
+            val raw = prefs[KEY_ACCOUNTS_JSON] ?: "[]"
+            val list = try { json.decodeFromString<MutableList<StoredAccount>>(raw) }
+                catch (_: Exception) { mutableListOf() }
+            // 去重 + 移到最前
+            list.removeAll { it.host == host }
+            list.add(0, StoredAccount(host = host, username = username, alias = alias))
+            // 最多保留 20 条
+            prefs[KEY_ACCOUNTS_JSON] = json.encodeToString(list.take(20))
+        }
+    }
+
+    suspend fun removeFromHistory(host: String) {
+        context.sessionDataStore.edit { prefs ->
+            val raw = prefs[KEY_ACCOUNTS_JSON] ?: return@edit
+            val list = try { json.decodeFromString<MutableList<StoredAccount>>(raw) }
+                catch (_: Exception) { return@edit }
+            list.removeAll { it.host == host }
+            prefs[KEY_ACCOUNTS_JSON] = json.encodeToString(list)
+        }
+    }
 }
+
+@kotlinx.serialization.Serializable
+data class StoredAccount(
+    val host: String,
+    val username: String,
+    val alias: String? = null
+)
