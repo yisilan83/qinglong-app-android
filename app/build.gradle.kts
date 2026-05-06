@@ -9,6 +9,7 @@ plugins {
 
 android {
     namespace = "com.qinglong.app"
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.qinglong.app"
