@@ -9,22 +9,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/**
- * App 级别 ViewModel，管理全局登录状态。
- */
 @HiltViewModel
 class AppViewModel @Inject constructor(
     sessionManager: SessionManager
 ) : ViewModel() {
 
+    /**
+     * 登录状态。
+     * - null = DataStore 首次加载中
+     * - false = 未登录
+     * - true = 已登录
+     */
     val isLoggedIn: StateFlow<Boolean?> = sessionManager.tokenFlow
-        .map { token ->
-            // null 表示首次加载还未完成
-            if (token == null) {
-                sessionManager.hostFlow.value?.let { false } // 有 host 但无 token → 确实未登录
-            } else {
-                true // 有 token → 已登录
-            }
-        }
+        .map { it != null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 }
