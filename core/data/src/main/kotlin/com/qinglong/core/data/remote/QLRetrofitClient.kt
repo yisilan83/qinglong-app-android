@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 /**
  * Retrofit 客户端工厂。
- * 使用默认 baseUrl 占位，实际 host 通过 @Url 动态指定或由调用方在拦截器中切换。
+ * [createApiService] 为每次登录/请求按需创建 Retrofit 实例（支持多 Host）。
  */
 @Singleton
 class QLRetrofitClient @Inject constructor(
@@ -19,10 +19,10 @@ class QLRetrofitClient @Inject constructor(
     private val sessionManager: SessionManager
 ) {
     /**
-     * 获取指向当前 Host 的 API 服务。
-     * Host 变化时需调用 [rebuildForCurrentHost] 重建。
+     * 获取当前会话的 API 服务（从已持久化的 Host 构建，用于登录后请求）。
      */
-    val apiService: QLApiService by lazy { buildService(sessionManager.host ?: "http://localhost:5700/") }
+    val apiService: QLApiService
+        get() = buildService(sessionManager.host ?: error("Host not set"))
 
     /**
      * 为指定 host 创建 API 服务（登录前使用）。
