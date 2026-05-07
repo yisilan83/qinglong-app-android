@@ -145,11 +145,9 @@ class TaskViewModel @Inject constructor(
     fun submitEdit(name: String, command: String, schedule: String) {
         val existing = _uiState.value.editingTask
         viewModelScope.launch {
-            val result = if (existing != null && existing.id != null) {
-                taskRepo.updateTask(existing.id, name, command, schedule)
-            } else {
-                taskRepo.addTask(name, command, schedule)
-            }
+            val result = existing?.id?.let { id ->
+                taskRepo.updateTask(id, name, command, schedule)
+            } ?: taskRepo.addTask(name, command, schedule)
             result
                 .onSuccess {
                     _uiState.update { it.copy(editingTask = null, showEditDialog = false) }
