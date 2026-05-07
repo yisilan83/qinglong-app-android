@@ -35,7 +35,8 @@ class ConfigRepositoryImpl @Inject constructor(
         return try {
             val res = api.getSystemConfig()
             if (res.code == 200) {
-                val info = res.data?.info
+                val configData = res.data
+                val info = configData?.info
                 if (info != null) Result.success(info)
                 else Result.failure(Exception(res.message ?: "系统配置为空"))
             } else {
@@ -49,12 +50,12 @@ class ConfigRepositoryImpl @Inject constructor(
     override suspend fun updateSystemConfig(config: SystemConfig): Result<Unit> {
         return try {
             config.logRemoveFrequency?.let {
-                val r1 = api.updateLogRemoveFrequency(mapOf("value" to it))
-                if (r1.code != 200) return Result.failure(Exception(r1.message ?: "更新日志频率失败"))
+                val res = api.updateLogRemoveFrequency(mapOf("logRemoveFrequency" to it))
+                if (res.code != 200) return Result.failure(Exception(res.message ?: "更新日志频率失败"))
             }
             config.cronConcurrency?.let {
-                val r2 = api.updateCronConcurrency(mapOf("value" to it))
-                if (r2.code != 200) return Result.failure(Exception(r2.message ?: "更新并发数失败"))
+                val res = api.updateCronConcurrency(mapOf("cronConcurrency" to it))
+                if (res.code != 200) return Result.failure(Exception(res.message ?: "更新并发数失败"))
             }
             Result.success(Unit)
         } catch (e: Exception) {

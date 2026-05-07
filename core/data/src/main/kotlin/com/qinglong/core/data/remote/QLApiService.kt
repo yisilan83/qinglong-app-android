@@ -16,9 +16,15 @@ interface QLApiService {
     @PUT("api/user/two-factor/login")
     suspend fun loginTwoFactor(@Body request: TwoFactorRequest): ApiResponse<LoginData>
 
-    // ── Health ──
-    @GET("api/health")
-    suspend fun healthCheck(): ApiResponse<Unit>
+    // ── User ──
+    @GET("api/user")
+    suspend fun getUserInfo(): ApiResponse<UserInfo>
+
+    @PUT("api/user")
+    suspend fun updateAccount(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @GET("api/user/login-log")
+    suspend fun getLoginLogs(): ApiResponse<List<LoginLogEntry>>
 
     // ── System ──
     @GET("api/system")
@@ -32,12 +38,6 @@ interface QLApiService {
 
     @PUT("api/system/config/cron-concurrency")
     suspend fun updateCronConcurrency(@Body body: Map<String, Int>): ApiResponse<Unit>
-
-    @GET("api/user/login-log")
-    suspend fun getLoginLogs(): ApiResponse<List<LoginLogEntry>>
-
-    @PUT("api/user")
-    suspend fun updateAccount(@Body body: Map<String, String>): ApiResponse<Unit>
 
     // ── Tasks ──
     @GET("api/crons")
@@ -117,6 +117,18 @@ interface QLApiService {
         @Query("path") path: String = ""
     ): ApiResponse<String>
 
+    @PUT("api/scripts/run")
+    suspend fun runScript(@Body body: ScriptDeleteRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts/stop")
+    suspend fun stopScript(@Body body: ScriptDeleteRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts/rename")
+    suspend fun renameScript(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @POST("api/scripts/download")
+    suspend fun downloadScript(@Body body: ScriptDeleteRequest): ApiResponse<Unit>
+
     // ── Dependencies ──
     @GET("api/dependencies")
     suspend fun getDependencies(
@@ -147,15 +159,6 @@ interface QLApiService {
     @GET("api/logs")
     suspend fun getLogFiles(): ApiResponse<List<ScriptFile>>
 
-    @GET("api/logs/detail")
-    suspend fun getLogDetail(): ApiResponse<List<ScriptFile>>
-
     @GET
     suspend fun getLogContent(@Url url: String): ApiResponse<String>
-
-    @HTTP(method = "DELETE", path = "api/logs", hasBody = true)
-    suspend fun deleteLogs(@Body ids: List<String>): ApiResponse<Unit>
-
-    @POST("api/logs/download")
-    suspend fun downloadLogs(@Body body: Map<String, String>): ApiResponse<Unit>
 }
