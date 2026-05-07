@@ -2,7 +2,6 @@ package com.qinglong.feature.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,7 +31,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,33 +56,6 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
         state.successMessage?.let { snackbarHostState.showSnackbar(it); viewModel.clearSuccess() }
     }
 
-    if (state.showPasswordDialog) {
-        AlertDialog(
-            onDismissRequest = viewModel::dismissPasswordDialog,
-            title = { Text("修改密码") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = state.oldPassword, onValueChange = viewModel::onOldPasswordChanged,
-                        label = { Text("旧密码") }, singleLine = true, modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = state.newPassword, onValueChange = viewModel::onNewPasswordChanged,
-                        label = { Text("新密码") }, singleLine = true, modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = viewModel::changePassword,
-                    enabled = state.oldPassword.isNotEmpty() && state.newPassword.isNotEmpty()
-                ) { Text("确定") }
-            },
-            dismissButton = { TextButton(onClick = viewModel::dismissPasswordDialog) { Text("取消") } }
-        )
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -97,9 +67,7 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
             )
         }
     ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
-        ) {
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
             // 系统配置
             SectionHeader("系统配置", state.configExpanded, viewModel::toggleConfigExpanded,
                 action = { IconButton(onClick = viewModel::loadSystemConfig) { Icon(Icons.Default.Refresh, "刷新") } })
@@ -109,14 +77,12 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
                     else {
                         OutlinedTextField(
                             value = state.editLogFrequency, onValueChange = viewModel::onLogFrequencyChanged,
-                            label = { Text("日志删除频率 (天)") },
-                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                            label = { Text("日志删除频率 (天)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedTextField(
                             value = state.editConcurrency, onValueChange = viewModel::onConcurrencyChanged,
-                            label = { Text("并发数") },
-                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                            label = { Text("并发数") }, singleLine = true, modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = viewModel::saveSystemConfig, modifier = Modifier.fillMaxWidth()) {
@@ -147,9 +113,7 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
                                     if (!ip.isNullOrBlank()) Text(ip, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 val t = log.time
-                                if (!t.isNullOrBlank()) {
-                                    Text(t, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
+                                if (!t.isNullOrBlank()) Text(t, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 val st = log.statusText
                                 Text(st, style = MaterialTheme.typography.labelSmall, color = if (log.status == 1) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                             }
@@ -157,10 +121,6 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
                     }
                 }
             }
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            // 账号
-            SectionHeader("账号", false, onClick = viewModel::showPasswordDialog)
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             // 关于
@@ -186,8 +146,7 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit,
         action?.invoke()
         Icon(
             if (!expanded) Icons.Default.ChevronRight else Icons.Default.KeyboardArrowDown,
-            null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            null, tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
