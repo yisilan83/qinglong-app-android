@@ -38,6 +38,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.compose.hilt.navigation)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
