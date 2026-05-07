@@ -1,32 +1,16 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
-    namespace = "com.qinglong.app"
+    namespace = "com.qinglong.feature.script"
     compileSdk = 35
-
-    defaultConfig {
-        applicationId = "com.qinglong.app"
-        minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
+    defaultConfig { minSdk = 24 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -36,12 +20,9 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
-    implementation(project(":core:data"))
+    implementation(project(":core:domain"))
     implementation(project(":core:ui"))
-    implementation(project(":feature:login"))
-    implementation(project(":feature:task"))
-    implementation(project(":feature:env"))
-    implementation(project(":feature:script"))
+    implementation(project(":core:data"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -51,16 +32,13 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
-
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.compose.navigation)
-    implementation(libs.compose.hilt.navigation)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.datastore.preferences)
+    implementation(libs.compose.hilt.navigation)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
