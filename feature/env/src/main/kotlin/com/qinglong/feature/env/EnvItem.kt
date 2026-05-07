@@ -78,9 +78,10 @@ fun EnvItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!env.remarks.isNullOrBlank()) {
+                val remarks = env.remarks
+                if (!remarks.isNullOrBlank()) {
                     Text(
-                        env.remarks,
+                        remarks,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
