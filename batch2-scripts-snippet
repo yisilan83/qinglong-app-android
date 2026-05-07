@@ -1,0 +1,30 @@
+    // ── Scripts ──
+    @GET("api/scripts")
+    suspend fun getScripts(): ApiResponse<List<ScriptFile>>
+
+    @POST("api/scripts")
+    suspend fun addScript(@Body body: ScriptAddRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts")
+    suspend fun updateScript(@Body body: ScriptUpdateRequest): ApiResponse<Unit>
+
+    @HTTP(method = "DELETE", path = "api/scripts", hasBody = true)
+    suspend fun deleteScript(@Body body: ScriptDeleteRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts/run")
+    suspend fun runScript(@Body body: ScriptRunRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts/stop")
+    suspend fun stopScript(@Body body: ScriptRunRequest): ApiResponse<Unit>
+
+    @PUT("api/scripts/rename")
+    suspend fun renameScript(@Body body: ScriptRenameRequest): ApiResponse<Unit>
+
+    @POST("api/scripts/download")
+    suspend fun downloadScript(@Body body: ScriptDownloadRequest): ApiResponse<Unit>
+
+    @GET("api/scripts/{filename}")
+    suspend fun getScriptContent(
+        @Path("filename") filename: String,
+        @Query("path") path: String = ""
+    ): ApiResponse<String>
