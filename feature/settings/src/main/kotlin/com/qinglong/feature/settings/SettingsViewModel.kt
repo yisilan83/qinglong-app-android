@@ -2,6 +2,7 @@ package com.qinglong.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qinglong.core.data.remote.QLApiService
 import com.qinglong.core.domain.ConfigRepository
 import com.qinglong.core.domain.LogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val configRepo: ConfigRepository,
-    private val logRepo: LogRepository
+    private val logRepo: LogRepository,
+    private val api: QLApiService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -81,6 +83,44 @@ class SettingsViewModel @Inject constructor(
 
     fun toggleLogsExpanded() {
         _uiState.update { it.copy(logsExpanded = !it.logsExpanded) }
+    }
+
+    // ── 修改密码 ──
+
+    fun showPasswordDialog() {
+        _uiState.update { it.copy(showPasswordDialog = true, oldPassword = "", newPassword = "") }
+    }
+
+    fun dismissPasswordDialog() {
+        _uiState.update { it.copy(showPasswordDialog = false, oldPassword = "", newPassword = "") }
+    }
+
+    fun onOldPasswordChanged(v: String) { _uiState.update { it.copy(oldPassword = v) } }
+    fun onNewPasswordChanged(v: String) { _uiState.update { it.copy(newPassword = v) } }
+
+    fun changePassword() {
+        val s = _uiState.value
+        if (s.oldPassword.isEmpty() || s.newPassword.isEmpty()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingPassword = true) }
+            try {
+                val res = api.updateAccount(mapOf("password" to s.newPassword, "username" to s.oldPassword))
+                if (res.code == 200) {
+                    _uiState.update {
+                        it.copy(
+                            showPasswordDialog = false, isLoadingPassword = false,
+                            successMessage = "密码已修改"
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(isLoadingPassword = false, error = res.message ?: "修改失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingPassword = false, error = e.message) }
+            }
+        }
     }
 
     fun clearError() { _uiState.update { it.copy(error = null) } }

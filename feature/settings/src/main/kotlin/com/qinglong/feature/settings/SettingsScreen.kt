@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +58,33 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
         state.successMessage?.let { snackbarHostState.showSnackbar(it); viewModel.clearSuccess() }
     }
 
+    if (state.showPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissPasswordDialog,
+            title = { Text("修改密码") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = state.oldPassword, onValueChange = viewModel::onOldPasswordChanged,
+                        label = { Text("当前用户名") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = state.newPassword, onValueChange = viewModel::onNewPasswordChanged,
+                        label = { Text("新密码") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = viewModel::changePassword,
+                    enabled = state.oldPassword.isNotEmpty() && state.newPassword.isNotEmpty()
+                ) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = viewModel::dismissPasswordDialog) { Text("取消") } }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -68,7 +97,6 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            // 系统配置
             SectionHeader("系统配置", state.configExpanded, viewModel::toggleConfigExpanded,
                 action = { IconButton(onClick = viewModel::loadSystemConfig) { Icon(Icons.Default.Refresh, "刷新") } })
             AnimatedVisibility(state.configExpanded) {
@@ -93,7 +121,6 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            // 登录日志
             SectionHeader("登录日志", state.logsExpanded, viewModel::toggleLogsExpanded)
             AnimatedVisibility(state.logsExpanded) {
                 if (state.isLoadingLogs) CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
@@ -123,7 +150,9 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            // 关于
+            SectionHeader("账号", false, onClick = viewModel::showPasswordDialog)
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             Column(Modifier.padding(16.dp)) {
                 Text("AutoPanel (QingLong)", style = MaterialTheme.typography.titleMedium)
                 Text("版本 1.0.0", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
