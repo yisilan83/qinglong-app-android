@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,9 +16,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -47,7 +53,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +68,32 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
             snackbarHostState.showSnackbar(err)
             viewModel.clearError()
         }
+    }
+
+    // 成功提示
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearSuccess()
+        }
+    }
+
+    // 去重确认对话框
+    if (state.showDuplicateDialog && state.duplicateTask != null) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDuplicate,
+            icon = { Icon(Icons.Default.Warning, contentDescription = null) },
+            title = { Text("检测到重复任务") },
+            text = {
+                Text("已存在相同名称和命令的任务「${state.duplicateTask!!.name}」，是否仍然新建？")
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmDuplicate) { Text("仍然新建") }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissDuplicate) { Text("取消") }
+            }
+        )
     }
 
     // 底部日志 Sheet
@@ -121,6 +152,14 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
                     onBatchMode = {
                         showMenu = false
                         viewModel.toggleBatchMode()
+                    },
+                    onExport = {
+                        showMenu = false
+                        viewModel.exportTasks()
+                    },
+                    onImport = {
+                        showMenu = false
+                        viewModel.importTasks()
                     }
                 )
             }
@@ -186,7 +225,9 @@ private fun DefaultTopBar(
     showMenu: Boolean,
     onDismissMenu: () -> Unit,
     onNewTask: () -> Unit,
-    onBatchMode: () -> Unit
+    onBatchMode: () -> Unit,
+    onExport: () -> Unit,
+    onImport: () -> Unit
 ) {
     var isSearching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -232,6 +273,16 @@ private fun DefaultTopBar(
                             text = { Text("批量操作") },
                             onClick = onBatchMode,
                             leadingIcon = { Icon(Icons.Default.SelectAll, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("导出备份") },
+                            onClick = onExport,
+                            leadingIcon = { Icon(Icons.Default.FileUpload, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("导入备份") },
+                            onClick = onImport,
+                            leadingIcon = { Icon(Icons.Default.FileDownload, null) }
                         )
                     }
                 }

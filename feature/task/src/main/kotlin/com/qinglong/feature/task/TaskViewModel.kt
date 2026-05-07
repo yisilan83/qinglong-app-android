@@ -1,24 +1,41 @@
 package com.qinglong.feature.task
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qinglong.core.domain.TaskRepository
 import com.qinglong.core.model.TaskInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 import javax.inject.Inject
+
+private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
+private const val BACKUP_DIR = "tasks"
+private const val BACKUP_FILE = "tasks_backup.json"
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val taskRepo: TaskRepository
+    private val taskRepo: TaskRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskUiState())
     val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
+
+    // 去重暂存
+    private var pendingName = ""
+    private var pendingCommand = ""
+    private var pendingSchedule = ""
 
     init { loadTasks() }
 
@@ -69,6 +86,7 @@ class TaskViewModel @Inject constructor(
     }
 
     fun clearError() { _uiState.update { it.copy(error = null) } }
+    fun clearSuccess() { _uiState.update { it.copy(successMessage = null) } }
 
     // ── 批量模式 ──
 
@@ -144,6 +162,31 @@ class TaskViewModel @Inject constructor(
 
     fun submitEdit(name: String, command: String, schedule: String) {
         val existing = _uiState.value.editingTask
+        // 新建任务时检查去重
+        if (existing == null) {
+            val dup = _uiState.value.tasks.find { it.name == name && it.command == command }
+            if (dup != null) {
+                pendingName = name
+                pendingCommand = command
+                pendingSchedule = schedule
+                _uiState.update { it.copy(duplicateTask = dup, showDuplicateDialog = true) }
+                return
+            }
+        }
+        doSubmitEdit(name, command, schedule)
+    }
+
+    fun confirmDuplicate() {
+        _uiState.update { it.copy(duplicateTask = null, showDuplicateDialog = false) }
+        doSubmitEdit(pendingName, pendingCommand, pendingSchedule)
+    }
+
+    fun dismissDuplicate() {
+        _uiState.update { it.copy(duplicateTask = null, showDuplicateDialog = false) }
+    }
+
+    private fun doSubmitEdit(name: String, command: String, schedule: String) {
+        val existing = _uiState.value.editingTask
         viewModelScope.launch {
             val result = existing?.id?.let { id ->
                 taskRepo.updateTask(id, name, command, schedule)
@@ -177,5 +220,55 @@ class TaskViewModel @Inject constructor(
 
     fun dismissLog() {
         _uiState.update { it.copy(logContent = null, showLogSheet = false) }
+    }
+
+    // ── 备份/导入 ──
+
+    fun exportTasks() {
+        viewModelScope.launch {
+            try {
+                val tasks = _uiState.value.tasks
+                val dir = File(context.getExternalFilesDir(null), BACKUP_DIR)
+                dir.mkdirs()
+                val file = File(dir, BACKUP_FILE)
+                withContext(Dispatchers.IO) {
+                    file.writeText(json.encodeToString(tasks))
+                }
+                _uiState.update { it.copy(successMessage = "已导出 ${tasks.size} 条任务到 ${file.absolutePath}") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "导出失败: ${e.message}") }
+            }
+        }
+    }
+
+    fun importTasks() {
+        viewModelScope.launch {
+            try {
+                val dir = File(context.getExternalFilesDir(null), BACKUP_DIR)
+                val file = File(dir, BACKUP_FILE)
+                if (!file.exists()) {
+                    _uiState.update { it.copy(error = "备份文件不存在: ${file.absolutePath}") }
+                    return@launch
+                }
+                val text = withContext(Dispatchers.IO) { file.readText() }
+                val imported = json.decodeFromString<List<TaskInfo>>(text)
+                if (imported.isEmpty()) {
+                    _uiState.update { it.copy(error = "备份文件为空") }
+                    return@launch
+                }
+                var success = 0
+                for (task in imported) {
+                    val name = task.name ?: continue
+                    val cmd = task.command ?: continue
+                    val sched = task.schedule ?: continue
+                    taskRepo.addTask(name, cmd, sched)
+                        .onSuccess { success++ }
+                }
+                _uiState.update { it.copy(successMessage = "已导入 $success / ${imported.size} 条任务") }
+                loadTasks(1)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "导入失败: ${e.message}") }
+            }
+        }
     }
 }

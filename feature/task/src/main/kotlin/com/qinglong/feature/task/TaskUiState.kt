@@ -16,5 +16,10 @@ data class TaskUiState(
     val showEditDialog: Boolean = false,
     val logContent: String? = null,
     val showLogSheet: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    // 去重确认
+    val duplicateTask: TaskInfo? = null,
+    val showDuplicateDialog: Boolean = false,
+    // 操作结果提示
+    val successMessage: String? = null
 )
