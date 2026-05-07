@@ -13,4 +13,5 @@ interface TaskRepository {
     suspend fun disableTasks(ids: List<String>): Result<Unit>
     suspend fun pinTasks(ids: List<String>): Result<Unit>
     suspend fun unpinTasks(ids: List<String>): Result<Unit>
+    suspend fun getTaskLog(id: String): Result<String>
 }

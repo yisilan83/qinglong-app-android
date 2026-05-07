@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,7 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -47,17 +47,22 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var showMenu by remember { mutableStateOf(false) }
 
-    // 下拉刷新
-    LaunchedEffect(state.isRefreshing) {
-        if (!state.isRefreshing) return@LaunchedEffect
+    // 错误提示
+    LaunchedEffect(state.error) {
+        state.error?.let { err ->
+            snackbarHostState.showSnackbar(err)
+            viewModel.clearError()
+        }
     }
 
     // 底部日志 Sheet
@@ -88,6 +93,7 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             when {
                 state.isBatchMode -> BatchTopBar(
@@ -168,18 +174,6 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
                     }
                 }
             }
-        }
-
-        // Snackbar error
-        state.error?.let { err ->
-            LaunchedEffect(err) {
-                kotlinx.coroutines.delay(3000)
-                viewModel.clearError()
-            }
-            Snackbar(
-                modifier = Modifier.padding(16.dp),
-                action = { TextButton(onClick = viewModel::clearError) { Text("关闭") } }
-            ) { Text(err) }
         }
     }
 }

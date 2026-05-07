@@ -2,7 +2,7 @@ package com.qinglong.feature.task
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qinglong.core.data.remote.QLApiService
+import com.qinglong.core.domain.TaskRepository
 import com.qinglong.core.model.TaskInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val api: QLApiService
+    private val taskRepo: TaskRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskUiState())
@@ -30,35 +30,29 @@ class TaskViewModel @Inject constructor(
                 if (page == 1) it.copy(isRefreshing = true, isLoading = true)
                 else it.copy(isLoadingMore = true)
             }
-            try {
-                val r = api.getTasks(search = _uiState.value.searchQuery, page = page, size = 50)
-                if (r.code == 200) {
-                    val listData = r.data
-                    if (listData != null) {
-                        val list = listData.data.orEmpty()
-                        _uiState.update {
-                            it.copy(
-                                tasks = if (page == 1) list else it.tasks + list,
-                                currentPage = page,
-                                hasMore = list.size >= 50,
-                                isRefreshing = false,
-                                isLoading = false,
-                                isLoadingMore = false
-                            )
-                        }
-                    } else {
-                        _uiState.update { it.copy(isRefreshing = false, isLoading = false, isLoadingMore = false) }
-                    }
-                } else {
+            taskRepo.getTasks(search = _uiState.value.searchQuery, page = page, size = 50)
+                .onSuccess { (list, _) ->
                     _uiState.update {
-                        it.copy(isRefreshing = false, isLoading = false, isLoadingMore = false, error = r.message)
+                        it.copy(
+                            tasks = if (page == 1) list else it.tasks + list,
+                            currentPage = page,
+                            hasMore = list.size >= 50,
+                            isRefreshing = false,
+                            isLoading = false,
+                            isLoadingMore = false
+                        )
                     }
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(isRefreshing = false, isLoading = false, isLoadingMore = false, error = e.message)
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isRefreshing = false,
+                            isLoading = false,
+                            isLoadingMore = false,
+                            error = e.message
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -112,13 +106,13 @@ class TaskViewModel @Inject constructor(
 
     // ── 批量操作 ──
 
-    fun batchRun(ids: List<String>) = batchOp(ids, "执行") { api.runTasks(it) }
-    fun batchStop(ids: List<String>) = batchOp(ids, "停止") { api.stopTasks(it) }
-    fun batchEnable(ids: List<String>) = batchOp(ids, "启用") { api.enableTasks(it) }
-    fun batchDisable(ids: List<String>) = batchOp(ids, "禁用") { api.disableTasks(it) }
-    fun batchPin(ids: List<String>) = batchOp(ids, "置顶") { api.pinTasks(it) }
-    fun batchUnpin(ids: List<String>) = batchOp(ids, "取消置顶") { api.unpinTasks(it) }
-    fun batchDelete(ids: List<String>) = batchOp(ids, "删除") { api.deleteTasks(it) }
+    fun batchRun(ids: List<String>) = batchOp(ids) { taskRepo.runTasks(it) }
+    fun batchStop(ids: List<String>) = batchOp(ids) { taskRepo.stopTasks(it) }
+    fun batchEnable(ids: List<String>) = batchOp(ids) { taskRepo.enableTasks(it) }
+    fun batchDisable(ids: List<String>) = batchOp(ids) { taskRepo.disableTasks(it) }
+    fun batchPin(ids: List<String>) = batchOp(ids) { taskRepo.pinTasks(it) }
+    fun batchUnpin(ids: List<String>) = batchOp(ids) { taskRepo.unpinTasks(it) }
+    fun batchDelete(ids: List<String>) = batchOp(ids) { taskRepo.deleteTasks(it) }
 
     fun batchRunSelected() = batchRun(_uiState.value.selectedIds.toList())
     fun batchStopSelected() = batchStop(_uiState.value.selectedIds.toList())
@@ -128,15 +122,11 @@ class TaskViewModel @Inject constructor(
     fun batchUnpinSelected() = batchUnpin(_uiState.value.selectedIds.toList())
     fun batchDeleteSelected() = batchDelete(_uiState.value.selectedIds.toList())
 
-    private fun batchOp(ids: List<String>, name: String, op: suspend (List<String>) -> com.qinglong.core.model.ApiResponse<Unit>) {
+    private fun batchOp(ids: List<String>, op: suspend (List<String>) -> Result<Unit>) {
         if (ids.isEmpty()) return
         viewModelScope.launch {
-            try {
-                val r = op(ids)
-                if (r.code != 200) _uiState.update { it.copy(error = "失败: ${r.message}") }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = "失败: ${e.message}") }
-            }
+            op(ids)
+                .onFailure { e -> _uiState.update { it.copy(error = "操作失败: ${e.message}") } }
             _uiState.update { it.copy(isBatchMode = false, selectedIds = emptySet()) }
             loadTasks(1)
         }
@@ -155,30 +145,19 @@ class TaskViewModel @Inject constructor(
     fun submitEdit(name: String, command: String, schedule: String) {
         val existing = _uiState.value.editingTask
         viewModelScope.launch {
-            try {
-                val r = if (existing != null && existing.id != null) {
-                    api.updateTask(mapOf<String, String>(
-                        "_id" to (existing.id ?: ""),
-                        "name" to name,
-                        "command" to command,
-                        "schedule" to schedule
-                    ))
-                } else {
-                    api.addTask(mapOf<String, String>(
-                        "name" to name,
-                        "command" to command,
-                        "schedule" to schedule
-                    ))
-                }
-                if (r.code == 200) {
+            val result = if (existing != null && existing.id != null) {
+                taskRepo.updateTask(existing.id, name, command, schedule)
+            } else {
+                taskRepo.addTask(name, command, schedule)
+            }
+            result
+                .onSuccess {
                     _uiState.update { it.copy(editingTask = null, showEditDialog = false) }
                     loadTasks(1)
-                } else {
-                    _uiState.update { it.copy(error = r.message ?: "操作失败") }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message) }
-            }
+                .onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
+                }
         }
     }
 
@@ -187,17 +166,13 @@ class TaskViewModel @Inject constructor(
     fun showLog(task: TaskInfo) {
         task.id?.let { id ->
             viewModelScope.launch {
-                try {
-                    val r = api.getTaskLog(id)
-                    _uiState.update {
-                        it.copy(
-                            logContent = if (r.code == 200) r.data else "加载失败: ${r.message}",
-                            showLogSheet = true
-                        )
+                taskRepo.getTaskLog(id)
+                    .onSuccess { log ->
+                        _uiState.update { it.copy(logContent = log, showLogSheet = true) }
                     }
-                } catch (e: Exception) {
-                    _uiState.update { it.copy(logContent = "加载失败: ${e.message}", showLogSheet = true) }
-                }
+                    .onFailure { e ->
+                        _uiState.update { it.copy(logContent = "加载失败: ${e.message}", showLogSheet = true) }
+                    }
             }
         }
     }

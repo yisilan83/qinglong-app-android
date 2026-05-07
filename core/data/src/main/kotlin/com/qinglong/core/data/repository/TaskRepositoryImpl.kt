@@ -48,6 +48,19 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun pinTasks(ids: List<String>) = apiCall { api.pinTasks(ids) }
     override suspend fun unpinTasks(ids: List<String>) = apiCall { api.unpinTasks(ids) }
 
+    override suspend fun getTaskLog(id: String): Result<String> {
+        return try {
+            val res = api.getTaskLog(id)
+            if (res.code == 200 && res.data != null) {
+                Result.success(res.data)
+            } else {
+                Result.failure(Exception(res.message ?: "加载日志失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private suspend fun apiCall(call: suspend () -> com.qinglong.core.model.ApiResponse<Unit>): Result<Unit> {
         return try {
             val res = call()

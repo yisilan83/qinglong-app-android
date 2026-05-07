@@ -18,7 +18,7 @@ data class TaskInfo(
     val name: String? = null,
     val command: String? = null,
     val schedule: String? = null,
-    val status: Int? = null,      // 0=running, 0.5=waiting, 1=idle
+    val status: Double? = null,   // 0=running, 0.5=waiting, 1=idle
     @SerialName("isDisabled") val isDisabled: Int? = null,
     @SerialName("isPinned") val isPinned: Int? = null,
     @SerialName("isSystem") val isSystem: Int? = null,
@@ -35,8 +35,8 @@ data class TaskInfo(
     val statusCode: Int
         get() = when {
             isDisabled == 1 -> TaskStatus.DISABLED
-            status == 0 -> TaskStatus.RUNNING
-            status == 3 -> TaskStatus.WAITING
+            status != null && status <= 0.0 -> TaskStatus.RUNNING
+            status != null && status <= 0.5 -> TaskStatus.WAITING
             else -> TaskStatus.IDLE
         }
 
