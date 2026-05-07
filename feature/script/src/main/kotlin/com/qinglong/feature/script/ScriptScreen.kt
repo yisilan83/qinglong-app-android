@@ -50,13 +50,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.qinglong.core.model.ScriptFile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScriptScreen(
-    navController: NavController,
+    onScriptClick: (filename: String, path: String) -> Unit,
     viewModel: ScriptViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -159,9 +158,7 @@ fun ScriptScreen(
                         depth = 0,
                         onClick = { f ->
                             if (!f.isDirectory) {
-                                val n = f.title ?: return@ScriptTreeItem
-                                val p = f.key ?: ""
-                                navController.navigate(ScriptEditorRoute(n, p))
+                                onScriptClick(f.title ?: "", f.key ?: "")
                             }
                         },
                         onLongClick = { viewModel.showActionMenu(it) }
