@@ -1,26 +1,28 @@
 package com.qinglong.app.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.SdStorage
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,17 +33,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.qinglong.core.model.SystemInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
-    val systemInfo by viewModel.systemInfo.collectAsStateWithLifecycle()
-    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -49,24 +50,50 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         }
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = loading,
+            isRefreshing = state.isLoading,
             onRefresh = viewModel::refresh,
             modifier = Modifier.padding(padding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (systemInfo == null && loading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    return@PullToRefreshBox
+                item { StatBar(state.runningCount, state.idleCount) }
+
+                item { HorizontalDivider(Modifier.padding(vertical = 4.dp)) }
+
+                item {
+                    Text(
+                        "系统日志",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
                 }
 
-                systemInfo?.let { info ->
-                    InfoGrid(info)
+                if (state.logs.isEmpty() && !state.isLoading) {
+                    item {
+                        Text("暂无日志", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
+                    }
+                }
+
+                items(state.logs, key = { it.key ?: it.hashCode().toString() }) { log ->
+                    Card(
+                        Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                    ) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Description, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                log.title ?: "--",
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -74,29 +101,23 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun InfoGrid(info: SystemInfo) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        InfoCard("版本", info.version ?: "--", Icons.Default.Security, Modifier.weight(1f))
-        InfoCard("CPU", "${info.cpuUsage ?: "--"}%", Icons.Default.Speed, Modifier.weight(1f))
+private fun StatBar(running: Int, idle: Int) {
+    Row(
+        Modifier.fillMaxWidth().padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        StatChip(Icons.Default.PlayArrow, "运行中", running, MaterialTheme.colorScheme.primary)
+        StatChip(Icons.Default.Stop, "空闲中", idle, MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        InfoCard("内存", info.memUsage ?: "--", Icons.Default.Memory, Modifier.weight(1f))
-        InfoCard("磁盘", info.diskUsage ?: "--", Icons.Default.SdStorage, Modifier.weight(1f))
-    }
-    InfoCard("系统", "${info.osType ?: ""} ${info.osVersion ?: ""}", Icons.Default.Cloud, Modifier.fillMaxWidth())
 }
 
 @Composable
-private fun InfoCard(label: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.size(8.dp))
-                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge)
-        }
+private fun StatChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, count: Int, color: androidx.compose.ui.graphics.Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = color)
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, color = color)
+        Spacer(Modifier.width(8.dp))
+        Text(count.toString(), style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Monospace, color = color)
     }
 }
