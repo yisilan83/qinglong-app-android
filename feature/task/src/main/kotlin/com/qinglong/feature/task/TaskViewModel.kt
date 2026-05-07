@@ -133,9 +133,9 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val r = op(ids)
-                if (r.code != 200) _uiState.update { it.copy(error = "${name}失败: ${r.message}") }
+                if (r.code != 200) _uiState.update { it.copy(error = "失败: ${r.message}") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "${name}失败: ${e.message}") }
+                _uiState.update { it.copy(error = "失败: ${e.message}") }
             }
             _uiState.update { it.copy(isBatchMode = false, selectedIds = emptySet()) }
             loadTasks(1)
@@ -157,9 +157,18 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val r = if (existing != null && existing.id != null) {
-                    api.updateTask(mapOf<String, String>("_id" to existing.id, "name" to name, "command" to command, "schedule" to schedule))
+                    api.updateTask(mapOf<String, String>(
+                        "_id" to (existing.id ?: ""),
+                        "name" to name,
+                        "command" to command,
+                        "schedule" to schedule
+                    ))
                 } else {
-                    api.addTask(mapOf<String, String>("name" to name, "command" to command, "schedule" to schedule))
+                    api.addTask(mapOf<String, String>(
+                        "name" to name,
+                        "command" to command,
+                        "schedule" to schedule
+                    ))
                 }
                 if (r.code == 200) {
                     _uiState.update { it.copy(editingTask = null, showEditDialog = false) }
