@@ -4,7 +4,6 @@ import com.qinglong.core.data.remote.QLApiService
 import com.qinglong.core.domain.EnvRepository
 import com.qinglong.core.model.EnvCreateRequest
 import com.qinglong.core.model.EnvInfo
-import com.qinglong.core.model.EnvUpdateRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,7 +35,9 @@ class EnvRepositoryImpl @Inject constructor(
 
     override suspend fun updateEnv(id: String, name: String, value: String, remarks: String?): Result<Unit> {
         return try {
-            val res = api.updateEnv(EnvUpdateRequest(id, name, value, remarks))
+            val body = mutableMapOf("_id" to id, "name" to name, "value" to value)
+            remarks?.let { body["remarks"] = it }
+            val res = api.updateEnv(body)
             if (res.code == 200) Result.success(Unit)
             else Result.failure(Exception(res.message ?: "更新失败"))
         } catch (e: Exception) {

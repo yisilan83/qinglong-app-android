@@ -97,7 +97,7 @@ interface QLApiService {
     suspend fun addEnvs(@Body body: List<EnvCreateRequest>): ApiResponse<Unit>
 
     @PUT("api/envs")
-    suspend fun updateEnv(@Body body: EnvUpdateRequest): ApiResponse<Unit>
+    suspend fun updateEnv(@Body body: Map<String, String>): ApiResponse<Unit>
 
     @HTTP(method = "DELETE", path = "api/envs", hasBody = true)
     suspend fun deleteEnvs(@Body ids: List<String>): ApiResponse<Unit>
