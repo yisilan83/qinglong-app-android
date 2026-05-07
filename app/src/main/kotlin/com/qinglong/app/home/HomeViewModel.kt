@@ -17,7 +17,11 @@ data class HomeUiState(
     val runningCount: Int = 0,
     val idleCount: Int = 0,
     val logs: List<ScriptFile> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val logFileName: String = "",
+    val logContent: String? = null,
+    val showLogSheet: Boolean = false,
+    val isLoadingContent: Boolean = false
 )
 
 @HiltViewModel
@@ -34,19 +38,36 @@ class HomeViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // tasks
             taskRepo.getTasks("", 1, 200)
                 .onSuccess { (list, _) ->
-                    val running = list.count { it.statusCode == 0 }
-                    val idle = list.count { it.statusCode == 2 }
+                    val running = list.count { t -> t.statusCode == 0 }
+                    val idle = list.count { t -> t.statusCode == 2 }
                     _uiState.update { it.copy(runningCount = running, idleCount = idle) }
                 }
-            // logs
             logRepo.getLogFiles()
                 .onSuccess { logs ->
                     _uiState.update { it.copy(logs = logs.sortedByDescending { l -> l.title }) }
                 }
             _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    fun showLog(log: ScriptFile) {
+        val path = log.key ?: return
+        val name = log.title ?: "日志"
+        viewModelScope.launch {
+            _uiState.update { it.copy(logFileName = name, isLoadingContent = true, showLogSheet = true) }
+            logRepo.getLogContent(path)
+                .onSuccess { c ->
+                    _uiState.update { it.copy(logContent = c.ifEmpty { "暂无内容" }, isLoadingContent = false) }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(logContent = "加载失败: ${e.message}", isLoadingContent = false) }
+                }
+        }
+    }
+
+    fun dismissLog() {
+        _uiState.update { it.copy(logContent = null, logFileName = "", showLogSheet = false) }
     }
 }
