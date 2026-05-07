@@ -27,13 +27,14 @@ import com.qinglong.app.env.EnvScreen
 import com.qinglong.app.home.HomeScreen
 import com.qinglong.app.scripts.ScriptsScreen
 import com.qinglong.app.settings.SettingsScreen
-import com.qinglong.app.tasks.TasksScreen
+import com.qinglong.feature.task.TaskRoute
+import com.qinglong.feature.task.TaskScreen
 
 private data class BottomNavItem(val route: Any, val label: String, val icon: ImageVector)
 
 private val bottomNavItems = listOf(
     BottomNavItem(HomeRoute, "首页", Icons.Default.Home),
-    BottomNavItem(TasksRoute, "任务", Icons.Default.Schedule),
+    BottomNavItem(TaskRoute, "任务", Icons.Default.Schedule),
     BottomNavItem(ScriptsRoute, "脚本", Icons.Default.Code),
     BottomNavItem(EnvRoute, "环境", Icons.Default.Layers),
     BottomNavItem(SettingsRoute, "设置", Icons.Default.Settings)
@@ -71,7 +72,7 @@ fun QLNavScaffold(onLogout: () -> Unit) {
             modifier = Modifier.padding(padding)
         ) {
             composable<HomeRoute> { HomeScreen() }
-            composable<TasksRoute> { TasksScreen() }
+            composable<TaskRoute> { TaskScreen() }
             composable<ScriptsRoute> { ScriptsScreen() }
             composable<EnvRoute> { EnvScreen() }
             composable<SettingsRoute> {
