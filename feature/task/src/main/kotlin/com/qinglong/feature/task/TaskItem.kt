@@ -86,19 +86,18 @@ fun TaskItem(
     }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = {
-                    if (isBatchMode) onToggleSelection()
-                },
-                onLongClick = { if (!isBatchMode) onLongPress() }
-            ),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(
+                    if (isBatchMode)
+                        Modifier.combinedClickable(onClick = onToggleSelection, onLongClick = {})
+                    else
+                        Modifier.combinedClickable(onClick = {}, onLongClick = onLongPress)
+                )
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -169,6 +168,7 @@ fun TaskItem(
                 }
             }
 
+            // 播放/暂停按钮 - 非批量模式下显示
             if (!isBatchMode) {
                 IconButton(onClick = { if (isRunning) onStop() else onRun() }) {
                     Icon(
