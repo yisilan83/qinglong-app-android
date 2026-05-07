@@ -14,6 +14,10 @@ abstract class DataModule {
 
     @Binds
     @Singleton
+    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
     abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
 
     @Binds
