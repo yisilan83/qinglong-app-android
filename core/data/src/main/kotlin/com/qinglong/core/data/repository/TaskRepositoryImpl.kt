@@ -51,9 +51,8 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun getTaskLog(id: String): Result<String> {
         return try {
             val res = api.getTaskLog(id)
-            val data = res.data
-            if (res.code == 200 && data != null) {
-                Result.success(data)
+            if (res.code == 200) {
+                Result.success(res.data ?: "")
             } else {
                 Result.failure(Exception(res.message ?: "加载日志失败"))
             }
