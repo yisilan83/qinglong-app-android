@@ -1,0 +1,280 @@
+package com.qinglong.feature.task
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    var showMenu by remember { mutableStateOf(false) }
+
+    // 下拉刷新
+    LaunchedEffect(state.isRefreshing) {
+        if (!state.isRefreshing) return@LaunchedEffect
+    }
+
+    // 底部日志 Sheet
+    if (state.showLogSheet) {
+        ModalBottomSheet(
+            onDismissRequest = viewModel::dismissLog,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("任务日志", style = MaterialTheme.typography.titleMedium)
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Text(
+                    state.logContent ?: "加载中...",
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+
+    // 编辑弹窗
+    if (state.showEditDialog) {
+        TaskEditDialog(
+            task = state.editingTask,
+            onDismiss = viewModel::dismissEditDialog,
+            onSubmit = { name, cmd, sched -> viewModel.submitEdit(name, cmd, sched) }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            when {
+                state.isBatchMode -> BatchTopBar(
+                    selectedCount = state.selectedIds.size,
+                    totalCount = state.tasks.size,
+                    onBack = viewModel::toggleBatchMode,
+                    onSelectAll = viewModel::selectAll,
+                    onRun = viewModel::batchRunSelected,
+                    onStop = viewModel::batchStopSelected,
+                    onEnable = viewModel::batchEnableSelected,
+                    onDisable = viewModel::batchDisableSelected,
+                    onPin = viewModel::batchPinSelected,
+                    onUnpin = viewModel::batchUnpinSelected,
+                    onDelete = viewModel::batchDeleteSelected
+                )
+                else -> DefaultTopBar(
+                    onMenuClick = { showMenu = true },
+                    onSearch = { viewModel.onSearch(it) },
+                    showMenu = showMenu,
+                    onDismissMenu = { showMenu = false },
+                    onNewTask = {
+                        showMenu = false
+                        viewModel.showEditDialog(null)
+                    },
+                    onBatchMode = {
+                        showMenu = false
+                        viewModel.toggleBatchMode()
+                    }
+                )
+            }
+        }
+    ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.padding(padding)
+        ) {
+            if (state.tasks.isEmpty() && !state.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("暂无任务", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.tasks, key = { it.id ?: it.hashCode().toString() }) { task ->
+                    TaskItem(
+                        task = task,
+                        isBatchMode = state.isBatchMode,
+                        isSelected = task.id?.let { state.selectedIds.contains(it) } ?: false,
+                        onToggleSelection = { task.id?.let { viewModel.toggleSelection(it) } },
+                        onRun = { viewModel.runTask(task) },
+                        onStop = { viewModel.stopTask(task) },
+                        onClickTitle = { viewModel.showLog(task) },
+                        onLongPressTitle = { /* 跳转脚本 - 后续实现 */ },
+                        onLongPress = { viewModel.showEditDialog(task) }
+                    )
+                }
+
+                if (state.isLoadingMore) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                if (state.hasMore && !state.isLoadingMore) {
+                    item {
+                        TextButton(
+                            onClick = viewModel::loadMore,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("加载更多") }
+                    }
+                }
+            }
+        }
+
+        // Snackbar error
+        state.error?.let { err ->
+            LaunchedEffect(err) {
+                kotlinx.coroutines.delay(3000)
+                viewModel.clearError()
+            }
+            Snackbar(
+                modifier = Modifier.padding(16.dp),
+                action = { TextButton(onClick = viewModel::clearError) { Text("关闭") } }
+            ) { Text(err) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DefaultTopBar(
+    onMenuClick: () -> Unit,
+    onSearch: (String) -> Unit,
+    showMenu: Boolean,
+    onDismissMenu: () -> Unit,
+    onNewTask: () -> Unit,
+    onBatchMode: () -> Unit
+) {
+    var isSearching by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+
+    if (isSearching) {
+        TopAppBar(
+            title = {
+                OutlinedTextField(
+                    value = query, onValueChange = { query = it },
+                    placeholder = { Text("搜索任务...") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = {
+                    isSearching = false
+                    query = ""
+                    onSearch("")
+                }) { Icon(Icons.Default.ArrowBack, "返回") }
+            },
+            actions = {
+                IconButton(onClick = {
+                    isSearching = false
+                    onSearch(query)
+                }) { Icon(Icons.Default.Search, "搜索") }
+            }
+        )
+    } else {
+        TopAppBar(
+            title = { Text("任务管理") },
+            actions = {
+                IconButton(onClick = { isSearching = true }) { Icon(Icons.Default.Search, "搜索") }
+                Box {
+                    IconButton(onClick = onMenuClick) { Icon(Icons.Default.MoreVert, "更多") }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = onDismissMenu) {
+                        DropdownMenuItem(
+                            text = { Text("新建任务") },
+                            onClick = onNewTask,
+                            leadingIcon = { Icon(Icons.Default.Add, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("批量操作") },
+                            onClick = onBatchMode,
+                            leadingIcon = { Icon(Icons.Default.SelectAll, null) }
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BatchTopBar(
+    selectedCount: Int,
+    totalCount: Int,
+    onBack: () -> Unit,
+    onSelectAll: () -> Unit,
+    onRun: () -> Unit,
+    onStop: () -> Unit,
+    onEnable: () -> Unit,
+    onDisable: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
+    onDelete: () -> Unit
+) {
+    TopAppBar(
+        title = { Text("已选 $selectedCount / $totalCount") },
+        navigationIcon = {
+            IconButton(onClick = onBack) { Icon(Icons.Default.Close, "退出批量") }
+        },
+        actions = {
+            IconButton(onClick = onSelectAll) { Icon(Icons.Default.SelectAll, "全选") }
+            IconButton(onClick = onRun, enabled = selectedCount > 0) { Text("执行", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onStop, enabled = selectedCount > 0) { Text("停止", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onEnable, enabled = selectedCount > 0) { Text("启用", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onDisable, enabled = selectedCount > 0) { Text("禁用", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onPin, enabled = selectedCount > 0) { Text("置顶", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onUnpin, enabled = selectedCount > 0) { Text("取消", style = MaterialTheme.typography.labelMedium) }
+            IconButton(onClick = onDelete, enabled = selectedCount > 0) { Text("🗑", style = MaterialTheme.typography.labelMedium) }
+        }
+    )
+}
