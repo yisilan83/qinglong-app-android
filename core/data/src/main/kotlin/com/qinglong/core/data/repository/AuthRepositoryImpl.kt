@@ -62,6 +62,22 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun logout(): Result<Unit> {
+        return try {
+            val host = sessionManager.host ?: return Result.failure(Exception("服务器地址未设置"))
+            val service = retrofitClient.createApiService(host)
+            val response = service.logout()
+            if (response.code == 200) {
+                sessionManager.clearSession()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.message ?: "登出失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun saveCredentials(
         host: String,
         username: String,

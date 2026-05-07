@@ -7,6 +7,7 @@ import com.qinglong.core.model.TwoFactorRequest
 interface AuthRepository {
     suspend fun login(request: LoginRequest): LoginResult
     suspend fun loginTwoFactor(request: TwoFactorRequest): LoginResult
+    suspend fun logout(): Result<Unit>
     suspend fun saveCredentials(
         host: String,
         username: String,

@@ -10,6 +10,9 @@ interface QLApiService {
     @POST("api/user/login")
     suspend fun login(@Body request: LoginRequest): ApiResponse<LoginData>
 
+    @POST("api/user/logout")
+    suspend fun logout(): ApiResponse<Unit>
+
     @PUT("api/user/two-factor/login")
     suspend fun loginTwoFactor(@Body request: TwoFactorRequest): ApiResponse<LoginData>
 
@@ -20,8 +23,11 @@ interface QLApiService {
     @GET("api/system/config")
     suspend fun getSystemConfig(): ApiResponse<SystemConfigData>
 
-    @PUT("api/system/config")
-    suspend fun updateSystemConfig(@Body body: Map<String, Int>): ApiResponse<Unit>
+    @PUT("api/system/config/log-remove-frequency")
+    suspend fun updateLogRemoveFrequency(@Body body: Map<String, Int>): ApiResponse<Unit>
+
+    @PUT("api/system/config/cron-concurrency")
+    suspend fun updateCronConcurrency(@Body body: Map<String, Int>): ApiResponse<Unit>
 
     @GET("api/user/login-log")
     suspend fun getLoginLogs(): ApiResponse<List<LoginLogEntry>>
