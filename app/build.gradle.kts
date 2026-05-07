@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":feature:script"))
     implementation(project(":feature:dependency"))
     implementation(project(":feature:log"))
+    implementation(project(":feature:settings"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)

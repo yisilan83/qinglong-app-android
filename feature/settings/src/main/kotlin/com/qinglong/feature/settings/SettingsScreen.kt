@@ -3,7 +3,6 @@ package com.qinglong.feature.settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -48,9 +45,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +59,6 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
         state.successMessage?.let { snackbarHostState.showSnackbar(it); viewModel.clearSuccess() }
     }
 
-    // 修改密码弹窗
     if (state.showPasswordDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissPasswordDialog,
@@ -107,7 +100,7 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
         ) {
-            // ── 系统配置 ──
+            // 系统配置
             SectionHeader("系统配置", state.configExpanded, viewModel::toggleConfigExpanded,
                 action = { IconButton(onClick = viewModel::loadSystemConfig) { Icon(Icons.Default.Refresh, "刷新") } })
             AnimatedVisibility(state.configExpanded) {
@@ -134,7 +127,7 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            // ── 登录日志 ──
+            // 登录日志
             SectionHeader("登录日志", state.logsExpanded, viewModel::toggleLogsExpanded)
             AnimatedVisibility(state.logsExpanded) {
                 if (state.isLoadingLogs) CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
@@ -153,14 +146,12 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
                                     val ip = log.ip
                                     if (!ip.isNullOrBlank()) Text(ip, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                val ts = log.timestamp
-                                if (ts != null) {
-                                    Text(
-                                        formatTimestamp(ts),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                val t = log.time
+                                if (!t.isNullOrBlank()) {
+                                    Text(t, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
+                                val st = log.statusText
+                                Text(st, style = MaterialTheme.typography.labelSmall, color = if (log.status == 1) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -168,11 +159,11 @@ fun SettingsScreen(onLogout: () -> Unit, viewModel: SettingsViewModel = hiltView
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            // ── 账号管理 ──
+            // 账号
             SectionHeader("账号", false, onClick = viewModel::showPasswordDialog)
-
-            // ── 关于 ──
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            // 关于
             Column(Modifier.padding(16.dp)) {
                 Text("AutoPanel (QingLong)", style = MaterialTheme.typography.titleMedium)
                 Text("版本 1.0.0", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -199,11 +190,4 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-private fun formatTimestamp(ts: Long): String {
-    return try {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        sdf.format(Date(ts))
-    } catch (_: Exception) { ts.toString() }
 }
