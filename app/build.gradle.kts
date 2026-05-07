@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":feature:task"))
     implementation(project(":feature:env"))
     implementation(project(":feature:script"))
+    implementation(project(":feature:dependency"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
