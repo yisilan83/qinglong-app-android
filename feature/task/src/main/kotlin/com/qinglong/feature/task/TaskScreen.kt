@@ -120,15 +120,7 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
                             Text("实时", style = MaterialTheme.typography.labelSmall)
                         }
                     }
-                    // 手动刷新按钮
-                    IconButton(onClick = {
-                        val currentContent = state.logContent
-                        viewModel.showLog(
-                            com.qinglong.core.model.TaskInfo(
-                                id = "", name = "", command = "", schedule = ""
-                            )
-                        )
-                    }) {
+                    IconButton(onClick = viewModel::refreshLog) {
                         Icon(Icons.Default.Sync, "刷新")
                     }
                 }

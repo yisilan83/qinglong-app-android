@@ -222,6 +222,11 @@ class TaskViewModel @Inject constructor(
         }
     }
 
+    fun refreshLog() {
+        val id = pollingTaskId ?: return
+        fetchLogOnce(id)
+    }
+
     fun dismissLog() {
         stopLogPolling()
         pollingTaskId = null
