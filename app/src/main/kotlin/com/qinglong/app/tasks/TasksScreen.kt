@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qinglong.core.model.TaskInfo
+import com.qinglong.core.model.TaskStatus
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,7 +119,7 @@ private fun TaskItem(
     onStop: () -> Unit,
     onLog: () -> Unit
 ) {
-    val isRunning = task.status == 0
+    val isRunning = task.statusCode == TaskStatus.RUNNING
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
