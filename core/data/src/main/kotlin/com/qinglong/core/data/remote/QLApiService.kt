@@ -6,6 +6,10 @@ import retrofit2.http.*
 
 interface QLApiService {
 
+    // ── Health ──
+    @GET("api/health")
+    suspend fun healthCheck(): ApiResponse<Unit>
+
     // ── Auth ──
     @POST("api/user/login")
     suspend fun login(@Body request: LoginRequest): ApiResponse<LoginData>
@@ -47,6 +51,9 @@ interface QLApiService {
         @Query("size") size: Int = 50
     ): ApiResponse<TaskListData>
 
+    @GET("api/crons/{id}")
+    suspend fun getTaskDetail(@Path("id") id: String): ApiResponse<TaskInfo>
+
     @POST("api/crons")
     suspend fun addTask(@Body body: Map<String, String>): ApiResponse<Unit>
 
@@ -74,6 +81,9 @@ interface QLApiService {
     @PUT("api/crons/unpin")
     suspend fun unpinTasks(@Body ids: List<String>): ApiResponse<Unit>
 
+    @PUT("api/crons/status")
+    suspend fun updateTaskStatus(@Body body: Map<String, String>): ApiResponse<Unit>
+
     @GET("api/crons/{id}/log")
     suspend fun getTaskLog(@Path("id") id: String): ApiResponse<String>
 
@@ -97,6 +107,18 @@ interface QLApiService {
 
     @PUT("api/envs/disable")
     suspend fun disableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/envs/name")
+    suspend fun renameEnv(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @PUT("api/envs/pin")
+    suspend fun pinEnvs(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/envs/unpin")
+    suspend fun unpinEnvs(@Body ids: List<String>): ApiResponse<Unit>
+
+    @POST("api/envs/upload")
+    suspend fun uploadEnvFile(@Body body: RequestBody): ApiResponse<Unit>
 
     // ── Scripts ──
     @GET("api/scripts")
@@ -153,6 +175,40 @@ interface QLApiService {
 
     @GET("api/dependencies/{id}")
     suspend fun getDependenceLog(@Path("id") id: String): ApiResponse<DependenceLogEntry>
+
+    // ── Subscriptions ──
+    @GET("api/subscriptions")
+    suspend fun getSubscriptions(): ApiResponse<List<SubscriptionInfo>>
+
+    @GET("api/subscriptions/{id}")
+    suspend fun getSubscriptionDetail(@Path("id") id: String): ApiResponse<SubscriptionInfo>
+
+    @POST("api/subscriptions")
+    suspend fun addSubscription(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions")
+    suspend fun updateSubscription(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @HTTP(method = "DELETE", path = "api/subscriptions", hasBody = true)
+    suspend fun deleteSubscriptions(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions/run")
+    suspend fun runSubscriptions(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions/stop")
+    suspend fun stopSubscriptions(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions/disable")
+    suspend fun disableSubscriptions(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions/enable")
+    suspend fun enableSubscriptions(@Body ids: List<String>): ApiResponse<Unit>
+
+    @PUT("api/subscriptions/status")
+    suspend fun updateSubscriptionStatus(@Body body: Map<String, String>): ApiResponse<Unit>
+
+    @GET("api/subscriptions/{id}/log")
+    suspend fun getSubscriptionLog(@Path("id") id: String): ApiResponse<String>
 
     // ── Config ──
     @POST("api/configs/save")
