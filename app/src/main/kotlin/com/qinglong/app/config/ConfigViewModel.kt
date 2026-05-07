@@ -2,7 +2,7 @@ package com.qinglong.app.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qinglong.core.data.remote.QLApiService
+import com.qinglong.core.domain.ConfigRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConfigViewModel @Inject constructor(
-    private val api: QLApiService
+    private val configRepo: ConfigRepository
 ) : ViewModel() {
 
     private val _content = MutableStateFlow<String?>(null)
@@ -20,27 +20,43 @@ class ConfigViewModel @Inject constructor(
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
 
+    private val _isEditing = MutableStateFlow(false)
+    val isEditing = _isEditing.asStateFlow()
+
+    private val _editContent = MutableStateFlow("")
+    val editContent = _editContent.asStateFlow()
+
     init { loadConfig() }
 
     fun loadConfig(name: String = "config.sh") {
         viewModelScope.launch {
             _loading.value = true
-            try {
-                val r = api.getConfigContent(name)
-                _content.value = if (r.code == 200) r.data else "加载失败"
-            } catch (_: Exception) { _content.value = "加载失败" }
+            configRepo.getConfigContent(name)
+                .onSuccess { c ->
+                    _content.value = c
+                    _editContent.value = c
+                }
+                .onFailure { _content.value = "加载失败: ${it.message}" }
             _loading.value = false
         }
     }
 
-    fun saveContent(name: String, content: String) {
+    fun enterEditMode() {
+        _editContent.value = _content.value ?: ""
+        _isEditing.value = true
+    }
+
+    fun onContentChanged(v: String) { _editContent.value = v }
+
+    fun saveContent(name: String = "config.sh") {
         viewModelScope.launch {
-            try {
-                api.saveConfig(mapOf("name" to name, "content" to content))
-            } catch (_: Exception) {}
-            loadConfig(name)
+            configRepo.saveConfig(name, _editContent.value)
+                .onSuccess {
+                    _content.value = _editContent.value
+                    _isEditing.value = false
+                }
         }
     }
 
-    fun clearContent() { _content.value = null }
+    fun cancelEdit() { _isEditing.value = false }
 }
