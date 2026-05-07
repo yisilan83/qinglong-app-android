@@ -2,14 +2,12 @@ package com.qinglong.app.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,10 +23,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,10 +44,29 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("青龙面板") })
+    if (state.showLogSheet) {
+        ModalBottomSheet(
+            onDismissRequest = viewModel::dismissLog,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(state.logFileName, style = MaterialTheme.typography.titleMedium)
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                if (state.isLoadingContent) {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    Text(
+                        state.logContent ?: "",
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
+    }
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("青龙面板") }) }
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = state.isLoading,
@@ -60,26 +79,16 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { StatBar(state.runningCount, state.idleCount) }
-
                 item { HorizontalDivider(Modifier.padding(vertical = 4.dp)) }
-
-                item {
-                    Text(
-                        "系统日志",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                }
+                item { Text("系统日志", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 4.dp)) }
 
                 if (state.logs.isEmpty() && !state.isLoading) {
-                    item {
-                        Text("暂无日志", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
-                    }
+                    item { Text("暂无日志", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp)) }
                 }
 
                 items(state.logs, key = { it.key ?: it.hashCode().toString() }) { log ->
                     Card(
-                        Modifier.fillMaxWidth(),
+                        Modifier.fillMaxWidth().clickable { viewModel.showLog(log) },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                     ) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
