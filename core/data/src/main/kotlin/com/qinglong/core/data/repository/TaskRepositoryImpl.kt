@@ -75,7 +75,7 @@ class TaskRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun listOp(ids: List<String>, call: suspend (RequestBody) -> com.qinglong.core.model.ApiResponse<Unit>): Result<Unit> {
+    private suspend fun listOp(ids: List<String>, call: suspend (RequestBody) -> com.qinglong.core.model.ApiResponse<Unit>): Result<Unit> {
         val arr = buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } }
         return apiCall(arr.toJsonBody(), call)
     }
