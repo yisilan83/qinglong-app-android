@@ -55,34 +55,34 @@ interface QLApiService {
     suspend fun getTaskDetail(@Path("id") id: String): ApiResponse<TaskInfo>
 
     @POST("api/crons")
-    suspend fun addTask(@Body body: Map<String, String>): ApiResponse<Unit>
+    suspend fun addTask(@Body body: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons")
-    suspend fun updateTask(@Body body: Map<String, String>): ApiResponse<Unit>
+    suspend fun updateTask(@Body body: RequestBody): ApiResponse<Unit>
 
     @HTTP(method = "DELETE", path = "api/crons", hasBody = true)
-    suspend fun deleteTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun deleteTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/run")
-    suspend fun runTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun runTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/stop")
-    suspend fun stopTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun stopTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/enable")
-    suspend fun enableTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun enableTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/disable")
-    suspend fun disableTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun disableTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/pin")
-    suspend fun pinTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun pinTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/unpin")
-    suspend fun unpinTasks(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun unpinTasks(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/crons/status")
-    suspend fun updateTaskStatus(@Body body: Map<String, String>): ApiResponse<Unit>
+    suspend fun updateTaskStatus(@Body body: RequestBody): ApiResponse<Unit>
 
     @GET("api/crons/{id}/log")
     suspend fun getTaskLog(@Path("id") id: String): ApiResponse<String>
@@ -94,28 +94,28 @@ interface QLApiService {
     ): ApiResponse<List<EnvInfo>>
 
     @POST("api/envs")
-    suspend fun addEnvs(@Body body: List<EnvCreateRequest>): ApiResponse<Unit>
+    suspend fun addEnvs(@Body body: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs")
-    suspend fun updateEnv(@Body body: Map<String, String>): ApiResponse<Unit>
+    suspend fun updateEnv(@Body body: RequestBody): ApiResponse<Unit>
 
     @HTTP(method = "DELETE", path = "api/envs", hasBody = true)
-    suspend fun deleteEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun deleteEnvs(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs/enable")
-    suspend fun enableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun enableEnvs(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs/disable")
-    suspend fun disableEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun disableEnvs(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs/name")
-    suspend fun renameEnv(@Body body: Map<String, String>): ApiResponse<Unit>
+    suspend fun renameEnv(@Body body: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs/pin")
-    suspend fun pinEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun pinEnvs(@Body ids: RequestBody): ApiResponse<Unit>
 
     @PUT("api/envs/unpin")
-    suspend fun unpinEnvs(@Body ids: List<String>): ApiResponse<Unit>
+    suspend fun unpinEnvs(@Body ids: RequestBody): ApiResponse<Unit>
 
     @POST("api/envs/upload")
     suspend fun uploadEnvFile(@Body body: RequestBody): ApiResponse<Unit>
