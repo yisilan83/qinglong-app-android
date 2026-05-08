@@ -92,12 +92,6 @@ fun TaskItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    if (isBatchMode)
-                        Modifier.combinedClickable(onClick = onToggleSelection, onLongClick = {})
-                    else
-                        Modifier.combinedClickable(onClick = {}, onLongClick = onLongPress)
-                )
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -106,7 +100,15 @@ fun TaskItem(
                 Spacer(Modifier.width(4.dp))
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            // 仅将 combinedClickable 放在信息区上，避免拦截右侧按钮
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = { if (isBatchMode) onToggleSelection() else onClickTitle() },
+                        onLongClick = { if (!isBatchMode) onLongPress() }
+                    )
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (task.pinned) {
                         Icon(
@@ -120,11 +122,7 @@ fun TaskItem(
                         task.name ?: "--",
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.combinedClickable(
-                            onClick = { if (!isBatchMode) onClickTitle() },
-                            onLongClick = { if (!isBatchMode) onLongPressTitle() }
-                        )
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Spacer(Modifier.size(2.dp))
@@ -168,7 +166,7 @@ fun TaskItem(
                 }
             }
 
-            // 播放/暂停按钮 - 非批量模式下显示
+            // 播放/暂停按钮 — 独立于 combinedClickable，不再被拦截
             if (!isBatchMode) {
                 IconButton(onClick = { if (isRunning) onStop() else onRun() }) {
                     Icon(

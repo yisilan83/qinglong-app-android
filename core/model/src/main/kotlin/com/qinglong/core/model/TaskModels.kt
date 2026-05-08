@@ -14,11 +14,12 @@ object TaskStatus {
 
 @Serializable
 data class TaskInfo(
+    @Serializable(with = ObjectIdSerializer::class)
     @SerialName("_id") val id: String? = null,
     val name: String? = null,
     val command: String? = null,
     val schedule: String? = null,
-    val status: Double? = null,   // 0=running, 0.5=waiting, 1=idle
+    val status: Double? = null,
     @SerialName("isDisabled") val isDisabled: Int? = null,
     @SerialName("isPinned") val isPinned: Int? = null,
     @SerialName("isSystem") val isSystem: Int? = null,
@@ -31,7 +32,6 @@ data class TaskInfo(
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("updatedAt") val updatedAt: String? = null
 ) {
-    /** 推导状态码：0=运行中, 1=队列中, 2=空闲, 3=已禁用 */
     val statusCode: Int
         get() = when {
             isDisabled == 1 -> TaskStatus.DISABLED
@@ -51,7 +51,6 @@ data class TaskInfo(
     val pinned: Boolean get() = isPinned == 1
 }
 
-/** 分页任务列表响应 (v15 API) */
 @Serializable
 data class TaskListData(
     val data: List<TaskInfo>? = null,

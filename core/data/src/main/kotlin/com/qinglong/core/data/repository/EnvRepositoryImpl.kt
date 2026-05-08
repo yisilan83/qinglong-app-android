@@ -2,9 +2,14 @@ package com.qinglong.core.data.repository
 
 import com.qinglong.core.data.remote.QLApiService
 import com.qinglong.core.domain.EnvRepository
-import com.qinglong.core.model.EnvCreateRequest
 import com.qinglong.core.model.EnvInfo
-import com.qinglong.core.model.EnvUpdateRequest
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,7 +30,16 @@ class EnvRepositoryImpl @Inject constructor(
 
     override suspend fun addEnvs(envs: List<Triple<String, String, String?>>): Result<Unit> {
         return try {
-            val body = envs.map { EnvCreateRequest(it.first, it.second, it.third) }
+            val arr = buildJsonArray {
+                envs.forEach { (name, value, remarks) ->
+                    add(buildJsonObject {
+                        put("name", name)
+                        put("value", value)
+                        remarks?.let { put("remarks", it) }
+                    })
+                }
+            }
+            val body = arr.toString().toRequestBody("application/json".toMediaType())
             val res = api.addEnvs(body)
             if (res.code == 200) Result.success(Unit)
             else Result.failure(Exception(res.message ?: "添加失败"))
@@ -36,21 +50,46 @@ class EnvRepositoryImpl @Inject constructor(
 
     override suspend fun updateEnv(id: String, name: String, value: String, remarks: String?): Result<Unit> {
         return try {
-            val res = api.updateEnv(EnvUpdateRequest(id, name, value, remarks))
+            val json = buildJsonObject {
+                put("_id", id)
+                put("name", name)
+                put("value", value)
+                if (remarks != null) put("remarks", remarks)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val res = api.updateEnv(body)
             if (res.code == 200) Result.success(Unit)
-            else Result.failure(Exception(res.message ?: "更新失败"))
+            else Result.failure(Exception(res.message ?: "更新失败 (${res.code})"))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun deleteEnvs(ids: List<String>) = apiCall { api.deleteEnvs(ids) }
-    override suspend fun enableEnvs(ids: List<String>) = apiCall { api.enableEnvs(ids) }
-    override suspend fun disableEnvs(ids: List<String>) = apiCall { api.disableEnvs(ids) }
-
-    private suspend fun apiCall(call: suspend () -> com.qinglong.core.model.ApiResponse<Unit>): Result<Unit> {
+    override suspend fun deleteEnvs(ids: List<String>): Result<Unit> {
         return try {
-            val res = call()
+            val arr = buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } }
+            val body = arr.toString().toRequestBody("application/json".toMediaType())
+            val res = api.deleteEnvs(body)
+            if (res.code == 200) Result.success(Unit)
+            else Result.failure(Exception(res.message ?: "删除失败"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun enableEnvs(ids: List<String>): Result<Unit> {
+        return listOp(ids) { api.enableEnvs(it) }
+    }
+
+    override suspend fun disableEnvs(ids: List<String>): Result<Unit> {
+        return listOp(ids) { api.disableEnvs(it) }
+    }
+
+    private suspend fun listOp(ids: List<String>, call: suspend (RequestBody) -> com.qinglong.core.model.ApiResponse<Unit>): Result<Unit> {
+        return try {
+            val arr = buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } }
+            val body = arr.toString().toRequestBody("application/json".toMediaType())
+            val res = call(body)
             if (res.code == 200) Result.success(Unit)
             else Result.failure(Exception(res.message ?: "操作失败"))
         } catch (e: Exception) {

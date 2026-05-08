@@ -1,14 +1,17 @@
 package com.qinglong.feature.task
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -21,6 +24,7 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -96,14 +100,30 @@ fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
         )
     }
 
-    // 底部日志 Sheet
+    // 底部日志 Sheet — 支持实时轮询
     if (state.showLogSheet) {
         ModalBottomSheet(
             onDismissRequest = viewModel::dismissLog,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("任务日志", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("任务日志", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.weight(1f))
+                    AnimatedVisibility(visible = state.isLivePolling) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(14.dp).width(14.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("实时", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    IconButton(onClick = viewModel::refreshLog) {
+                        Icon(Icons.Default.Sync, "刷新")
+                    }
+                }
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(
                     state.logContent ?: "加载中...",

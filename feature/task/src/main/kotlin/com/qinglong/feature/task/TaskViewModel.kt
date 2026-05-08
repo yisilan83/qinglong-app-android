@@ -5,13 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qinglong.core.domain.TaskRepository
 import com.qinglong.core.model.TaskInfo
+import com.qinglong.core.model.TaskStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -22,6 +26,7 @@ import javax.inject.Inject
 private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
 private const val BACKUP_DIR = "tasks"
 private const val BACKUP_FILE = "tasks_backup.json"
+private const val LOG_POLL_INTERVAL_MS = 2000L
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
@@ -36,6 +41,10 @@ class TaskViewModel @Inject constructor(
     private var pendingName = ""
     private var pendingCommand = ""
     private var pendingSchedule = ""
+
+    // 日志轮询
+    private var logPollJob: Job? = null
+    private var pollingTaskId: String? = null
 
     init { loadTasks() }
 
@@ -202,24 +211,65 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    // ── 日志 ──
+    // ── 日志（带实时轮询）──
 
     fun showLog(task: TaskInfo) {
         task.id?.let { id ->
-            viewModelScope.launch {
+            stopLogPolling()
+            pollingTaskId = id
+            _uiState.update { it.copy(logContent = null, showLogSheet = true, isLivePolling = true) }
+            fetchLogOnce(id)
+            startLogPolling(task)
+        }
+    }
+
+    fun refreshLog() {
+        val id = pollingTaskId ?: return
+        fetchLogOnce(id)
+    }
+
+    fun dismissLog() {
+        stopLogPolling()
+        pollingTaskId = null
+        _uiState.update { it.copy(logContent = null, showLogSheet = false, isLivePolling = false) }
+    }
+
+    private fun fetchLogOnce(id: String) {
+        viewModelScope.launch {
+            taskRepo.getTaskLog(id)
+                .onSuccess { log ->
+                    _uiState.update { it.copy(logContent = log.ifEmpty { "（日志为空）" }) }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(logContent = "加载失败: ${e.message}") }
+                }
+        }
+    }
+
+    private fun startLogPolling(task: TaskInfo) {
+        logPollJob = viewModelScope.launch {
+            while (isActive) {
+                delay(LOG_POLL_INTERVAL_MS)
+                val id = pollingTaskId ?: break
                 taskRepo.getTaskLog(id)
                     .onSuccess { log ->
-                        _uiState.update { it.copy(logContent = log, showLogSheet = true) }
+                        _uiState.update { it.copy(logContent = log.ifEmpty { "（日志为空）" }) }
                     }
-                    .onFailure { e ->
-                        _uiState.update { it.copy(logContent = "加载失败: ${e.message}", showLogSheet = true) }
-                    }
+                // 检查任务是否还在运行，不在运行则停止轮询
+                val currentTask = _uiState.value.tasks.find { it.id == id }
+                if (currentTask != null &&
+                    currentTask.statusCode != TaskStatus.RUNNING &&
+                    currentTask.statusCode != TaskStatus.WAITING) {
+                    _uiState.update { it.copy(isLivePolling = false) }
+                    break
+                }
             }
         }
     }
 
-    fun dismissLog() {
-        _uiState.update { it.copy(logContent = null, showLogSheet = false) }
+    private fun stopLogPolling() {
+        logPollJob?.cancel()
+        logPollJob = null
     }
 
     // ── 备份/导入 ──
