@@ -1,5 +1,6 @@
 package com.qinglong.core.data.di
 
+import android.util.Log
 import com.qinglong.core.data.remote.QLApiService
 import com.qinglong.core.data.remote.QLRetrofitClient
 import com.qinglong.core.data.session.SessionManager
@@ -12,6 +13,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+
+private const val TAG = "QL-Network"
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -32,17 +35,19 @@ object NetworkModule {
             .addInterceptor { chain ->
                 val original = chain.request()
                 val token = sessionManager.token
-                val request = if (token != null) {
+                Log.d(TAG, "→ ${original.method} ${original.url} | token=${if (token != null) "${token.take(20)}..." else "NULL"}")
+                val request = if (!token.isNullOrBlank()) {
                     original.newBuilder()
                         .header("Authorization", "Bearer $token")
                         .build()
                 } else {
+                    Log.w(TAG, "⚠ 请求缺少 Authorization: ${original.url}")
                     original
                 }
                 chain.proceed(request)
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = HttpLoggingInterceptor.Level.HEADERS
             })
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -64,6 +69,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideQLApiService(client: QLRetrofitClient): QLApiService {
+        Log.d(TAG, "初始化 QLApiService, host=${client.sessionManager.host}")
         return client.apiService
     }
 }

@@ -1,6 +1,7 @@
 package com.qinglong.feature.env
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qinglong.core.domain.EnvRepository
@@ -20,6 +21,7 @@ import java.io.File
 import javax.inject.Inject
 
 private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
+private const val TAG = "QL-Env"
 private const val BACKUP_DIR = "environments"
 private const val BACKUP_FILE = "envs_backup.json"
 private val exportRegex = Regex("""export\s+(\w+)\s*=\s*["']([^"']*)["']""")
@@ -120,15 +122,18 @@ class EnvViewModel @Inject constructor(
     // ── 编辑 ──
 
     fun showEditDialog(env: EnvInfo? = null) {
+        Log.d(TAG, "showEditDialog: env=${env?.name}, id=${env?.id}")
         _uiState.update { it.copy(editingEnv = env, showEditDialog = true) }
     }
 
     fun dismissEditDialog() {
+        Log.d(TAG, "dismissEditDialog")
         _uiState.update { it.copy(editingEnv = null, showEditDialog = false) }
     }
 
     fun submitEdit(name: String, value: String, remarks: String?) {
         val existing = _uiState.value.editingEnv
+        Log.d(TAG, "submitEdit: existing=${existing?.name} name=$name valueLen=${value.length} remarks=$remarks")
         // 新建时去重
         if (existing == null) {
             val dup = _uiState.value.envs.find { it.name == name }
@@ -155,16 +160,20 @@ class EnvViewModel @Inject constructor(
     private fun doSubmitEdit(name: String, value: String, remarks: String?) {
         val existing = _uiState.value.editingEnv
         viewModelScope.launch {
+            Log.d(TAG, "doSubmitEdit: existingId=${existing?.id} name=$name")
             val result = existing?.id?.let { id ->
+                Log.d(TAG, "→ 调用 envRepo.updateEnv(id=$id, name=$name, value=$value)")
                 envRepo.updateEnv(id, name, value, remarks)
             } ?: envRepo.addEnvs(listOf(Triple(name, value, remarks)))
             result
                 .onSuccess {
-                    _uiState.update { it.copy(editingEnv = null, showEditDialog = false) }
+                    Log.d(TAG, "✓ updateEnv 成功")
+                    _uiState.update { it.copy(editingEnv = null, showEditDialog = false, successMessage = "保存成功") }
                     loadEnvs()
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
+                    Log.e(TAG, "✗ updateEnv 失败: ${e.message}", e)
+                    _uiState.update { it.copy(error = "保存失败: ${e.message}") }
                 }
         }
     }
