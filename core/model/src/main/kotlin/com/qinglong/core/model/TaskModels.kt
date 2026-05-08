@@ -2,11 +2,6 @@ package com.qinglong.core.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 /** 任务状态码 */
 object TaskStatus {
@@ -19,7 +14,8 @@ object TaskStatus {
 
 @Serializable
 data class TaskInfo(
-    @SerialName("_id") val idRaw: JsonElement? = null,
+    @Serializable(with = ObjectIdSerializer::class)
+    @SerialName("_id") val id: String? = null,
     val name: String? = null,
     val command: String? = null,
     val schedule: String? = null,
@@ -36,14 +32,6 @@ data class TaskInfo(
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("updatedAt") val updatedAt: String? = null
 ) {
-    /** 兼容 _id 为纯字符串或 { "$oid": "..." } 两种 MongoDB 格式 */
-    val id: String?
-        get() = when (idRaw) {
-            is JsonPrimitive -> idRaw.jsonPrimitive.content
-            is JsonObject -> idRaw.jsonObject["\$oid"]?.jsonPrimitive?.content
-            else -> idRaw?.toString()
-        }
-
     val statusCode: Int
         get() = when {
             isDisabled == 1 -> TaskStatus.DISABLED
