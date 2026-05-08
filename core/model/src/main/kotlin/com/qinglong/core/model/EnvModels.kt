@@ -1,8 +1,14 @@
 package com.qinglong.core.model
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -13,9 +19,33 @@ object EnvStatus {
     const val DISABLED = 1
 }
 
+/** 兼容 MongoDB ObjectId 的纯字符串和 { $oid: "..." } 两种格式 */
+object ObjectIdSerializer : KSerializer<String?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("ObjectId", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: String?) {
+        encoder.encodeString(value ?: "")
+    }
+
+    override fun deserialize(decoder: Decoder): String? {
+        return try {
+            val jsonDecoder = decoder as JsonDecoder
+            when (val el = jsonDecoder.decodeJsonElement()) {
+                is JsonPrimitive -> el.jsonPrimitive.content
+                is JsonObject -> el.jsonObject["\$oid"]?.jsonPrimitive?.content
+                else -> el.toString()
+            }
+        } catch (_: Exception) {
+            try { decoder.decodeString() } catch (_: Exception) { null }
+        }
+    }
+}
+
 @Serializable
 data class EnvInfo(
-    @SerialName("_id") val idRaw: JsonElement? = null,
+    @Serializable(with = ObjectIdSerializer::class)
+    @SerialName("_id") val id: String? = null,
     val name: String? = null,
     val value: String? = null,
     val remarks: String? = null,
@@ -24,14 +54,6 @@ data class EnvInfo(
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("updatedAt") val updatedAt: String? = null
 ) {
-    /** 兼容 _id 为纯字符串或 { "$oid": "..." } 两种格式 */
-    val id: String?
-        get() = when (idRaw) {
-            is JsonPrimitive -> idRaw.jsonPrimitive.content
-            is JsonObject -> idRaw.jsonObject["\$oid"]?.jsonPrimitive?.content
-            else -> idRaw?.toString()
-        }
-
     val statusText: String
         get() = if (status == EnvStatus.ENABLED) "已启用" else "已禁用"
 }
