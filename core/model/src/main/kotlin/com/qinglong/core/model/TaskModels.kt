@@ -2,6 +2,11 @@ package com.qinglong.core.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /** 任务状态码 */
 object TaskStatus {
@@ -14,11 +19,11 @@ object TaskStatus {
 
 @Serializable
 data class TaskInfo(
-    @SerialName("_id") val id: String? = null,
+    @SerialName("_id") val idRaw: JsonElement? = null,
     val name: String? = null,
     val command: String? = null,
     val schedule: String? = null,
-    val status: Double? = null,   // 0=running, 0.5=waiting, 1=idle
+    val status: Double? = null,
     @SerialName("isDisabled") val isDisabled: Int? = null,
     @SerialName("isPinned") val isPinned: Int? = null,
     @SerialName("isSystem") val isSystem: Int? = null,
@@ -31,7 +36,14 @@ data class TaskInfo(
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("updatedAt") val updatedAt: String? = null
 ) {
-    /** 推导状态码：0=运行中, 1=队列中, 2=空闲, 3=已禁用 */
+    /** 兼容 _id 为纯字符串或 { "$oid": "..." } 两种 MongoDB 格式 */
+    val id: String?
+        get() = when (idRaw) {
+            is JsonPrimitive -> idRaw.jsonPrimitive.content
+            is JsonObject -> idRaw.jsonObject["\$oid"]?.jsonPrimitive?.content
+            else -> idRaw?.toString()
+        }
+
     val statusCode: Int
         get() = when {
             isDisabled == 1 -> TaskStatus.DISABLED
@@ -51,7 +63,6 @@ data class TaskInfo(
     val pinned: Boolean get() = isPinned == 1
 }
 
-/** 分页任务列表响应 (v15 API) */
 @Serializable
 data class TaskListData(
     val data: List<TaskInfo>? = null,
